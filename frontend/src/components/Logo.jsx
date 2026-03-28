@@ -29,7 +29,7 @@ export function LogoFull({ size = 32, className = "" }) {
         className="font-headline font-extrabold tracking-tighter text-on-surface"
         style={{ fontSize: size * 0.6 }}
       >
-        Interview<span className="text-on-tertiary-container">AI</span>
+        Interv-<span className="text-on-tertiary-container">U</span>
       </span>
     </div>
   );
