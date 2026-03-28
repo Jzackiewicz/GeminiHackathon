@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { api, clearToken } from "../api";
 import TopBar from "../components/dashboard/TopBar";
 import PreInterviewTips from "../components/dashboard/PreInterviewTips";
@@ -15,6 +15,10 @@ export default function Interview() {
   const [interviews, setInterviews] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Job passed from job detail page
+  const navJob = location.state?.job;
 
   useEffect(() => {
     api.me().then(setUser).catch(() => {
@@ -25,7 +29,11 @@ export default function Interview() {
 
   useEffect(() => {
     api.listInterviews().then(setInterviews).catch(() => {});
-    api.getSelectedJob().then((r) => setSelectedJob(r.job)).catch(() => {});
+    if (navJob) {
+      setSelectedJob(navJob);
+    } else {
+      api.getSelectedJob().then((r) => setSelectedJob(r.job)).catch(() => {});
+    }
   }, []);
 
   function logout() {
@@ -63,12 +71,25 @@ export default function Interview() {
         <div className="flex-1 min-w-0 flex flex-col gap-4 min-h-0">
           {/* Analysis (takes more height — ~60%) */}
           <div className="flex-[3] min-h-0">
-            <InterviewAnalysis />
+            <InterviewAnalysis
+              interview={
+                (selectedJob?.slug
+                  ? interviews.filter((iv) => iv.job_slug === selectedJob.slug)
+                  : interviews
+                ).find((iv) => iv.review)
+              }
+            />
           </div>
 
-          {/* History (compact — ~40%) */}
+          {/* History (compact — ~40%), filtered to current job */}
           <div className="flex-[2] min-h-0">
-            <InterviewHistory history={interviews} />
+            <InterviewHistory
+              history={
+                selectedJob?.slug
+                  ? interviews.filter((iv) => iv.job_slug === selectedJob.slug)
+                  : interviews
+              }
+            />
           </div>
         </div>
       </div>

@@ -78,6 +78,7 @@ class JobSelectRequest(BaseModel):
 
 class InterviewSave(BaseModel):
     mode: str = "interview"
+    job_slug: str | None = None
     job_title: str = ""
     company: str = ""
     requirements: str = ""
@@ -89,6 +90,7 @@ class InterviewSave(BaseModel):
 class InterviewOut(BaseModel):
     id: int
     mode: str
+    job_slug: str | None = None
     job_title: str | None = None
     company: str | None = None
     requirements: str | None = None

@@ -2,11 +2,26 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send, FileText, Mic, Lightbulb, Download, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { api } from "@/api";
 
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export default function JobActions({ slug, offer }) {
   const navigate = useNavigate();
+  const [interviews, setInterviews] = useState([]);
+
+  useEffect(() => {
+    if (slug) {
+      api.listInterviews().then((all) => {
+        setInterviews(all.filter((iv) => iv.job_slug === slug));
+      }).catch(() => {});
+    }
+  }, [slug]);
 
   // CV generation state
   const [cvDialogOpen, setCvDialogOpen] = useState(false);
@@ -135,13 +150,16 @@ export default function JobActions({ slug, offer }) {
 
         {/* Start Interview */}
         <button
-          onClick={() => navigate("/interview/session", {
+          onClick={() => navigate("/interview", {
             state: {
-              job_context: [
-                offer?.title,
-                offer?.company ? `at ${offer.company}` : "",
-                offer?.requirements?.length ? `\nSkills: ${offer.requirements.join(", ")}` : "",
-              ].filter(Boolean).join(" "),
+              job: {
+                slug,
+                title: offer?.title,
+                company: offer?.company,
+                requirements: offer?.requirements,
+                tags: offer?.requirements,
+                url: offer?.url,
+              },
             },
           })}
           className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
@@ -149,6 +167,48 @@ export default function JobActions({ slug, offer }) {
           <Mic className="w-4 h-4" />
           Start Interview Simulation
         </button>
+
+        {/* Interview History for this job */}
+        {interviews.length > 0 && (
+          <>
+            <div className="border-t border-panel-border" />
+            <div>
+              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+                Interview History ({interviews.length})
+              </p>
+              <div className="space-y-2">
+                {interviews.map((iv) => (
+                  <div
+                    key={iv.id}
+                    onClick={() => navigate("/interview/summary", { state: { interviewId: iv.id } })}
+                    className="flex items-center justify-between p-2 rounded-lg bg-background border border-panel-border hover:bg-[#EAEAE5] transition cursor-pointer"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#1A1A1A] font-medium truncate">{iv.mode || "Interview"}</p>
+                      {iv.created_at && (
+                        <p className="text-[10px] text-muted">{formatDate(iv.created_at)}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {iv.score != null && (
+                        <span className={`text-xs font-semibold ${iv.score >= 7 ? "text-emerald-600" : iv.score >= 5 ? "text-amber-600" : "text-red-500"}`}>
+                          {iv.score}/10
+                        </span>
+                      )}
+                      {iv.review ? (
+                        <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700">Reviewed</Badge>
+                      ) : iv.transcript?.length > 0 ? (
+                        <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700">Completed</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">Started</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
 
       {/* CV Generation Dialog */}

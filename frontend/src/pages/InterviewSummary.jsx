@@ -227,11 +227,11 @@ export default function InterviewSummary() {
           {/* Navigation buttons */}
           <div className="flex gap-3 pt-2 pb-4">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate(-1)}
               className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-background text-[#1A1A1A] text-sm font-medium rounded-full border border-panel-border hover:bg-[#EAEAE5] hover:-translate-y-0.5 transition-all cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              Dashboard
+              Back
             </button>
             <button
               onClick={() => navigate("/interview/session")}

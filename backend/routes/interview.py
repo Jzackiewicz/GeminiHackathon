@@ -22,6 +22,7 @@ class InterviewStartRequest(BaseModel):
     personality: str = "Professional"
     interview_type: str = "technical"
     job_context: str = ""
+    job_slug: str | None = None
 
 
 class InterviewStartOut(BaseModel):
@@ -109,9 +110,9 @@ def start_interview(body: InterviewStartRequest, user_id: int = Depends(get_curr
     )
 
     cur = db.execute(
-        """INSERT INTO interviews (user_id, mode, job_title, company, requirements, assistant_id)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (user_id, body.interview_type, job_title, company, requirements, assistant_id),
+        """INSERT INTO interviews (user_id, mode, job_slug, job_title, company, requirements, assistant_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (user_id, body.interview_type, body.job_slug, job_title, company, requirements, assistant_id),
     )
     db.commit()
     interview_id = cur.lastrowid
@@ -311,11 +312,12 @@ def review_interview_transcript(
 def save_interview(body: InterviewSave, user_id: int = Depends(get_current_user)):
     db = get_db()
     cur = db.execute(
-        """INSERT INTO interviews (user_id, mode, job_title, company, requirements, transcript, review, score)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO interviews (user_id, mode, job_slug, job_title, company, requirements, transcript, review, score)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             user_id,
             body.mode,
+            body.job_slug,
             body.job_title,
             body.company,
             body.requirements,
@@ -330,6 +332,7 @@ def save_interview(body: InterviewSave, user_id: int = Depends(get_current_user)
     return InterviewOut(
         id=interview_id,
         mode=body.mode,
+        job_slug=body.job_slug,
         job_title=body.job_title,
         company=body.company,
         requirements=body.requirements,
@@ -351,6 +354,7 @@ def list_interviews(user_id: int = Depends(get_current_user)):
         InterviewOut(
             id=r["id"],
             mode=r["mode"],
+            job_slug=r["job_slug"],
             job_title=r["job_title"],
             company=r["company"],
             requirements=r["requirements"],

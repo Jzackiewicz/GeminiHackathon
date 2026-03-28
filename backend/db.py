@@ -56,6 +56,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id),
             mode TEXT NOT NULL DEFAULT 'interview',
+            job_slug TEXT,
             job_title TEXT,
             company TEXT,
             requirements TEXT,
@@ -128,6 +129,8 @@ def init_db():
     interview_cols = {row[1] for row in cursor.fetchall()}
     if "assistant_id" not in interview_cols:
         conn.execute("ALTER TABLE interviews ADD COLUMN assistant_id TEXT")
+    if "job_slug" not in interview_cols:
+        conn.execute("ALTER TABLE interviews ADD COLUMN job_slug TEXT")
 
     conn.commit()
     conn.close()

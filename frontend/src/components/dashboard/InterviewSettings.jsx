@@ -99,7 +99,7 @@ export default function InterviewSettings({ selectedJob }) {
             Generate
           </button>
           <button
-            onClick={() => navigate("/interview/session", { state: { personality, interview_type: type, job_context: jobContext } })}
+            onClick={() => navigate("/interview/session", { state: { personality, interview_type: type, job_context: jobContext, job_slug: selectedJob?.slug } })}
             className="flex-[2] flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             <Phone className="w-4 h-4" />

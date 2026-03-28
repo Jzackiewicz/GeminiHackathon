@@ -66,6 +66,7 @@ export default function InterviewSession() {
           personality: settings.personality || "Professional",
           interview_type: settings.interview_type || "Technical",
           job_context: settings.job_context || "",
+          job_slug: settings.job_slug || null,
         });
         if (cancelled) return;
         setInterview(data);
