@@ -1,0 +1,21 @@
+{
+  "name": "geminihackathon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/stitch-sdk": "^0.0.3"
+  },
+  "devDependencies": {
+    "dotenv": "^17.3.1"
+  }
+}

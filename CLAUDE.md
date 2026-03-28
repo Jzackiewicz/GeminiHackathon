@@ -33,6 +33,8 @@ Detailed references for all external services:
 - `docs/justjoinit-api.md` -- JustJoinIT job board (listings, filtering, details)
 - `docs/google-stitch.md` -- Google Stitch (MCP-based UI/CV generation, HTML-to-PDF)
 - `docs/linkedin-api.md` -- LinkedIn (OAuth limitations, data export parsing)
+- `docs/linkedin-posts.md` -- LinkedIn posts access (data export Shares.csv, alternatives)
+- `docs/job-apis.md` -- Job board APIs (Fantastic.jobs, NoFluffJobs, Adzuna, Remotive, etc.)
 
 ## Env Vars
 
