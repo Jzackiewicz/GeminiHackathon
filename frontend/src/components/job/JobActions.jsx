@@ -105,7 +105,7 @@ export default function JobActions({ jobId }) {
 
         {/* Start Interview */}
         <button
-          onClick={() => navigate("/interview")}
+          onClick={() => navigate("/interview/session")}
           className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
         >
           <Mic className="w-4 h-4" />
