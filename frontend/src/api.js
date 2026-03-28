@@ -65,4 +65,18 @@ export const api = {
   debugCVStatus: (jobId) => request(`/debug/cv/status/${jobId}`),
   debugPreviewCVPrompt: (params) =>
     request("/debug/cv/preview-prompt", { method: "POST", body: JSON.stringify(params) }),
+  debugCareerAdvise: (params) =>
+    request("/debug/career/advise", { method: "POST", body: JSON.stringify(params) }),
+  debugCVToPdf: async (html) => {
+    const res = await fetch(`${API_BASE}/debug/cv/pdf`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "PDF conversion failed");
+    }
+    return res.blob();
+  },
 };

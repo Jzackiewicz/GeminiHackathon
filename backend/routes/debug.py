@@ -3,9 +3,13 @@ import json
 import logging
 import os
 
+import subprocess
+import tempfile
+from pathlib import Path
+
 from fastapi import APIRouter, Header
 from pydantic import BaseModel
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from db import get_db
 from dependencies import get_current_user
 from services.scraper import deep_scrape_github
@@ -74,6 +78,7 @@ class VapiTestRequest(BaseModel):
     company: str | None = "Test Corp"
     requirements: str | None = "Python, FastAPI, PostgreSQL"
     difficulty: str = "medium"  # easy, medium, hard, faang
+    interview_type: str = "technical"  # technical, behavioral, system_design, mixed
 
 
 @router.get("/vapi/config")
@@ -102,6 +107,7 @@ def create_test_assistant(body: VapiTestRequest):
                 company=body.company,
                 requirements=body.requirements,
                 difficulty=body.difficulty,
+                interview_type=body.interview_type,
             )
         log.info(f"VAPI assistant created: {assistant_id}")
         return {"assistant_id": assistant_id}
@@ -280,6 +286,125 @@ def cv_preview_prompt(body: CVGenerateRequest):
         return {"prompt": prompt}
     except Exception as e:
         return {"error": str(e)}
+
+
+class CareerAdvisorRequest(BaseModel):
+    github_data: dict | None = None
+    profile_analysis: dict | None = None
+    interviews: list[dict] | None = None  # list of past interviews with reviews
+
+
+@router.post("/career/advise")
+def career_advise(body: CareerAdvisorRequest):
+    """Generate career suggestions from full profile context."""
+    # Build profile section
+    profile_parts = []
+    if body.profile_analysis:
+        a = body.profile_analysis
+        profile_parts.append(f"Summary: {a.get('summary', '')}")
+        profile_parts.append(f"Experience Level: {a.get('experience_level', '')}")
+        profile_parts.append(f"Primary Role: {a.get('primary_role', '')}")
+        techs = [f"{t.get('name')} ({t.get('proficiency')})" for t in a.get('technologies', [])]
+        if techs:
+            profile_parts.append(f"Technologies: {', '.join(techs)}")
+        strengths = a.get('strengths', [])
+        if strengths:
+            profile_parts.append(f"Strengths: {', '.join(strengths)}")
+        projects = a.get('notable_projects', [])
+        if projects:
+            profile_parts.append("Notable Projects:")
+            for p in projects:
+                profile_parts.append(f"  - {p.get('name')}: {p.get('description', '')} [{', '.join(p.get('technologies', []))}]")
+
+    if body.github_data:
+        gh = body.github_data
+        langs = gh.get('languages', {})
+        if langs:
+            top = [f"{l} ({d.get('percent', 0)}%)" for l, d in list(langs.items())[:10]]
+            profile_parts.append(f"GitHub Languages: {', '.join(top)}")
+        profile_parts.append(f"Original repos: {gh.get('original_repos_count', '?')}")
+        profile_parts.append(f"Account age: since {gh.get('account_created', '?')[:4]}")
+        topics = gh.get('topics', {})
+        if topics:
+            profile_parts.append(f"Topics: {', '.join(list(topics.keys())[:15])}")
+
+    profile_section = ""
+    if profile_parts:
+        profile_section = "Developer Profile:\n" + "\n".join(profile_parts)
+
+    # Build interviews section
+    interviews_parts = []
+    if body.interviews:
+        for iv in body.interviews:
+            review = iv.get('review')
+            if not review:
+                continue
+            interviews_parts.append(f"Interview for {iv.get('job_title', 'Unknown')} — Score: {review.get('overall_score', '?')}/10, Recommendation: {review.get('hiring_recommendation', '?')}")
+            interviews_parts.append(f"  Assessment: {review.get('overall_assessment', '')}")
+            for w in review.get('weaknesses', []):
+                interviews_parts.append(f"  Weakness: {w.get('area')} — {w.get('detail')}")
+            for m in review.get('missed_opportunities', []):
+                interviews_parts.append(f"  Missed: {m.get('topic')} — {m.get('suggestion')}")
+            for r in review.get('recommendations', []):
+                interviews_parts.append(f"  Recommendation: {r.get('topic')} — {r.get('action')}")
+
+    interviews_section = ""
+    if interviews_parts:
+        interviews_section = "Past Interview Results:\n" + "\n".join(interviews_parts)
+
+    additional_section = "Additional data sources: None connected yet (LinkedIn, etc.)"
+
+    system = get_prompt("career_advisor", "system")
+    user_prompt = get_prompt(
+        "career_advisor", "user",
+        profile_section=profile_section or "No profile data available.",
+        interviews_section=interviews_section or "No interview data available.",
+        additional_section=additional_section,
+    )
+
+    try:
+        raw = prompt_with_context("", user_prompt, system=system)
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        suggestions = json.loads(cleaned.strip())
+        return {"suggestions": suggestions}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+class HtmlToPdfRequest(BaseModel):
+    html: str
+
+
+@router.post("/cv/pdf")
+async def convert_to_pdf(body: HtmlToPdfRequest):
+    """Convert HTML to PDF using Puppeteer + Chromium."""
+    script = Path(__file__).resolve().parent.parent / "html_to_pdf.mjs"
+    node_modules = Path(__file__).resolve().parent.parent / "node_modules"
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+        pdf_path = f.name
+
+    result = subprocess.run(
+        ["node", str(script), pdf_path],
+        input=body.html,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "NODE_PATH": str(node_modules)},
+        timeout=60,
+    )
+
+    if result.returncode != 0:
+        try:
+            err = json.loads(result.stderr)
+            return {"error": err.get("error", "PDF conversion failed")}
+        except Exception:
+            return {"error": result.stderr or "PDF conversion failed"}
+
+    return FileResponse(pdf_path, media_type="application/pdf", filename="cv.pdf")
 
 
 @router.get("/logs")

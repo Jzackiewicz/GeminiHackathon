@@ -90,11 +90,14 @@ interview:
     - Background: {summary}
 
     Difficulty: {difficulty}
+    Interview Type: {interview_type}
 
     {difficulty_guidelines}
 
-    Interview Guidelines:
-    - Ask 4-5 technical questions related to the required skills
+    {type_guidelines}
+
+    General Guidelines:
+    - Ask 4-5 questions
     - Tailor questions to the candidate's actual experience
     - Ask follow-up questions based on their answers
     - Never use placeholder text like [brackets] — speak naturally
@@ -102,8 +105,37 @@ interview:
 
   first_message: >
     Hello {user_name}! Welcome to your mock interview for the {job_title}
-    position{company_suffix}. I'll be asking you some technical questions today.
+    position{company_suffix}. I'll be asking you some questions today.
     Ready to begin?
+
+interview_types:
+  technical: |
+    Focus on TECHNICAL questions:
+    - Coding concepts, algorithms, data structures
+    - Language-specific knowledge and best practices
+    - Debugging scenarios, code review, trade-offs
+    - Framework/library usage and architecture patterns
+    - Ask the candidate to explain how they would implement something
+  behavioral: |
+    Focus on BEHAVIORAL questions (STAR method):
+    - "Tell me about a time when..." scenarios
+    - Teamwork, conflict resolution, leadership
+    - How they handle failure, tight deadlines, ambiguity
+    - Communication with stakeholders and cross-functional teams
+    - Do NOT ask coding or technical implementation questions
+  system_design: |
+    Focus on SYSTEM DESIGN questions:
+    - Ask the candidate to design a system (e.g., URL shortener, chat app, feed)
+    - Evaluate: requirements gathering, high-level architecture, component design
+    - Probe on scalability, reliability, data storage choices
+    - Ask about trade-offs (SQL vs NoSQL, monolith vs microservices, etc.)
+    - Expect diagrams to be described verbally since this is a voice interview
+  mixed: |
+    Use a MIX of question types:
+    - Start with 1 behavioral question to warm up
+    - Ask 2-3 technical questions about their core skills
+    - End with 1 system design or architecture question
+    - Balance depth across all types
 
 difficulty_levels:
   easy: |
@@ -216,3 +248,36 @@ cv_generation:
     - Make the skills section visually interesting with tags or progress bars
     - Projects should have brief descriptions and tech stack tags
     - Professional typography and spacing
+
+career_advisor:
+  system: |
+    You are a senior career advisor and tech industry mentor.
+    You analyze a developer's full profile — GitHub repos, technical skills, interview performance — and produce actionable career suggestions.
+    You must respond with valid JSON only — no markdown, no commentary.
+
+  user: |
+    Analyze this developer's full profile and generate personalized career suggestions.
+
+    {profile_section}
+
+    {interviews_section}
+
+    {additional_section}
+
+    Return a JSON array of 5-10 suggestions, each with exactly these fields:
+
+    {{
+      "type": "skill_up | visibility | project | networking | interview_prep | career_move | learning | open_source",
+      "difficulty": "easy | medium | hard",
+      "title": "Max 40 chars — concise actionable title",
+      "description": "2-3 sentences explaining what to do, why it matters, and how to start"
+    }}
+
+    Guidelines:
+    - Base suggestions on ACTUAL data — don't make generic advice
+    - If interview data is available, address specific weaknesses found there
+    - If GitHub data shows gaps (e.g., no tests, no CI, no README), suggest fixing them
+    - Mix quick wins (easy) with longer-term goals (hard)
+    - Prioritize suggestions that would have the most impact on employability
+    - Be specific: name actual technologies, projects, or skills from the profile
+    - If data sources are missing (e.g., no LinkedIn), suggest connecting them

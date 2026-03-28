@@ -390,6 +390,9 @@ export default function Debug() {
 
         {/* Interview History */}
         <InterviewHistory />
+
+        {/* Career Advisor */}
+        <CareerAdvisor analysis={analysis} githubData={result?.github_data} />
       </div>
     </div></div>
   );
@@ -794,30 +797,7 @@ function StitchCV({ analysis, githubData }) {
 
       {cvResult && (
         <div className="space-y-3">
-          <div className="flex gap-2">
-            <button
-              onClick={downloadHTML}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition"
-            >
-              Download HTML
-            </button>
-            <button
-              onClick={() => {
-                const win = window.open("", "_blank");
-                win.document.write(cvResult.html);
-                win.document.close();
-              }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
-            >
-              Open in New Tab
-            </button>
-            <button
-              onClick={() => { setCvResult(null); setJobId(null); }}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
-            >
-              Generate Another
-            </button>
-          </div>
+          <CVActions cvResult={cvResult} githubData={githubData} onReset={() => { setCvResult(null); setJobId(null); }} downloadHTML={downloadHTML} />
 
           {/* Inline preview */}
           <CollapsibleSection title={`CV Preview (${cvResult.html.length.toLocaleString()} chars)`} defaultOpen>
@@ -851,6 +831,7 @@ function VapiDebug({ analysis, githubData }) {
   const [company, setCompany] = useState("Test Corp");
   const [requirements, setRequirements] = useState("Python, FastAPI, PostgreSQL");
   const [difficulty, setDifficulty] = useState("medium");
+  const [interviewType, setInterviewType] = useState("technical");
   const [autoFilled, setAutoFilled] = useState(false);
 
   // Auto-fill from Gemini analysis
@@ -904,6 +885,7 @@ function VapiDebug({ analysis, githubData }) {
       company: company || null,
       requirements: requirements || null,
       difficulty,
+      interview_type: interviewType,
     };
   }
 
@@ -1084,22 +1066,38 @@ function VapiDebug({ analysis, githubData }) {
           </div>
 
           {mode === "interview" && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Difficulty:</span>
-              {["easy", "medium", "hard", "faang"].map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setDifficulty(d)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
-                    difficulty === d
-                      ? d === "easy" ? "bg-green-600" : d === "medium" ? "bg-blue-600" : d === "hard" ? "bg-orange-600" : "bg-red-600"
-                      : "bg-gray-800 hover:bg-gray-700"
-                  }`}
-                >
-                  {d === "faang" ? "FAANG" : d.charAt(0).toUpperCase() + d.slice(1)}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-16">Difficulty:</span>
+                {["easy", "medium", "hard", "faang"].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDifficulty(d)}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                      difficulty === d
+                        ? d === "easy" ? "bg-green-600" : d === "medium" ? "bg-blue-600" : d === "hard" ? "bg-orange-600" : "bg-red-600"
+                        : "bg-gray-800 hover:bg-gray-700"
+                    }`}
+                  >
+                    {d === "faang" ? "FAANG" : d.charAt(0).toUpperCase() + d.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-16">Type:</span>
+                {["technical", "behavioral", "system_design", "mixed"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setInterviewType(t)}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                      interviewType === t ? "bg-blue-600" : "bg-gray-800 hover:bg-gray-700"
+                    }`}
+                  >
+                    {t === "system_design" ? "System Design" : t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="grid grid-cols-2 gap-2">
@@ -1333,3 +1331,166 @@ function VapiDebug({ analysis, githubData }) {
   );
 }
 
+
+function CVActions({ cvResult, githubData, onReset, downloadHTML }) {
+  const [converting, setConverting] = useState(false);
+
+  async function downloadPDF() {
+    setConverting(true);
+    try {
+      const blob = await api.debugCVToPdf(cvResult.html);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const name = githubData?.name || githubData?.username || "developer";
+      a.download = `cv-${name.toLowerCase().replace(/\s+/g, "-")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setConverting(false);
+    }
+  }
+
+  return (
+    <div className="flex gap-2 flex-wrap">
+      <button
+        onClick={downloadHTML}
+        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition"
+      >
+        Download HTML
+      </button>
+      <button
+        onClick={downloadPDF}
+        disabled={converting}
+        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition disabled:opacity-50"
+      >
+        {converting ? "Converting..." : "Download PDF"}
+      </button>
+      <button
+        onClick={() => {
+          const win = window.open("", "_blank");
+          win.document.write(cvResult.html);
+          win.document.close();
+        }}
+        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
+      >
+        Open in New Tab
+      </button>
+      <button
+        onClick={onReset}
+        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
+      >
+        Generate Another
+      </button>
+    </div>
+  );
+}
+
+
+function CareerAdvisor({ analysis, githubData }) {
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
+  const [error, setError] = useState("");
+  const [interviews, setInterviews] = useState(null);
+
+  async function generate() {
+    setLoading(true);
+    setError("");
+    setSuggestions(null);
+    try {
+      // Fetch interviews for context
+      let ivData = interviews;
+      if (!ivData) {
+        try {
+          ivData = await api.listInterviews();
+          setInterviews(ivData);
+        } catch { ivData = []; }
+      }
+
+      const resp = await api.debugCareerAdvise({
+        github_data: githubData || null,
+        profile_analysis: analysis || null,
+        interviews: ivData || null,
+      });
+      if (resp.error) { setError(resp.error); }
+      else { setSuggestions(resp.suggestions); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const typeColors = {
+    skill_up: "bg-blue-500/20 text-blue-400",
+    visibility: "bg-purple-500/20 text-purple-400",
+    project: "bg-green-500/20 text-green-400",
+    networking: "bg-pink-500/20 text-pink-400",
+    interview_prep: "bg-orange-500/20 text-orange-400",
+    career_move: "bg-red-500/20 text-red-400",
+    learning: "bg-cyan-500/20 text-cyan-400",
+    open_source: "bg-yellow-500/20 text-yellow-400",
+  };
+
+  const difficultyColors = {
+    easy: "bg-green-500/20 text-green-400",
+    medium: "bg-yellow-500/20 text-yellow-400",
+    hard: "bg-red-500/20 text-red-400",
+  };
+
+  return (
+    <div className="bg-gray-900 rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Career Advisor</h2>
+        {suggestions && (
+          <button onClick={generate} disabled={loading} className="text-xs text-gray-500 hover:text-gray-300 transition">
+            {loading ? "Analyzing..." : "Regenerate"}
+          </button>
+        )}
+      </div>
+
+      {!suggestions && !loading && (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">
+            Analyzes your GitHub profile, interview history, and skills to generate personalized career suggestions.
+            {!githubData && !analysis && " Scrape a GitHub profile and run Gemini analysis first for best results."}
+          </p>
+          <button
+            onClick={generate}
+            disabled={loading}
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition disabled:opacity-50"
+          >
+            Generate Career Suggestions
+          </button>
+        </div>
+      )}
+
+      {loading && (
+        <p className="text-gray-400 text-sm text-center py-4">Analyzing your profile...</p>
+      )}
+
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {suggestions && (
+        <div className="space-y-2">
+          {suggestions.map((s, i) => (
+            <div key={i} className="p-3 bg-gray-800 rounded-lg space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeColors[s.type] || "bg-gray-700 text-gray-400"}`}>
+                  {(s.type || "").replace("_", " ")}
+                </span>
+                <span className={`px-2 py-0.5 rounded text-xs ${difficultyColors[s.difficulty] || "bg-gray-700 text-gray-400"}`}>
+                  {s.difficulty}
+                </span>
+                <span className="text-sm font-medium text-gray-200">{s.title}</span>
+              </div>
+              <p className="text-xs text-gray-400">{s.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
