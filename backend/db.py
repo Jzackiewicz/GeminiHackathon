@@ -124,5 +124,10 @@ def init_db():
     if "career_suggestions" not in profile_cols:
         conn.execute("ALTER TABLE profiles ADD COLUMN career_suggestions TEXT")
 
+    cursor = conn.execute("PRAGMA table_info(interviews)")
+    interview_cols = {row[1] for row in cursor.fetchall()}
+    if "assistant_id" not in interview_cols:
+        conn.execute("ALTER TABLE interviews ADD COLUMN assistant_id TEXT")
+
     conn.commit()
     conn.close()

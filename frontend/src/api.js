@@ -48,6 +48,15 @@ export const api = {
   listJobs: () => request("/jobs"),
   selectJob: (job_offer_id) =>
     request("/jobs/select", { method: "POST", body: JSON.stringify({ job_offer_id }) }),
+  vapiConfig: () => request("/interviews/vapi-config"),
+  startInterview: (settings) =>
+    request("/interviews/start", { method: "POST", body: JSON.stringify(settings) }),
+  interviewChat: (id, messages) =>
+    request(`/interviews/${id}/chat`, { method: "POST", body: JSON.stringify({ messages }) }),
+  interviewComplete: (id, transcript) =>
+    request(`/interviews/${id}/complete`, { method: "POST", body: JSON.stringify({ transcript }) }),
+  interviewReview: (id, transcript) =>
+    request(`/interviews/${id}/review`, { method: "POST", body: JSON.stringify({ transcript }) }),
   saveInterview: (data) =>
     request("/interviews", { method: "POST", body: JSON.stringify(data) }),
   listInterviews: () => request("/interviews"),
