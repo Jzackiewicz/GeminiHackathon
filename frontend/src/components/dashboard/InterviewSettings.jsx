@@ -1,18 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, Phone, Sparkles, Loader2 } from "lucide-react";
+import { Settings, Phone, Sparkles, Loader2, Volume2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/api";
 
 const personalities = ["Professional", "Friendly", "Tough", "Casual"];
 const interviewTypes = ["Technical", "Behavioral", "System Design", "Mixed"];
+const voices = [
+  { id: "nova", label: "Nova", provider: "openai" },
+  { id: "alloy", label: "Alloy", provider: "openai" },
+  { id: "echo", label: "Echo", provider: "openai" },
+  { id: "fable", label: "Fable", provider: "openai" },
+  { id: "onyx", label: "Onyx", provider: "openai" },
+  { id: "shimmer", label: "Shimmer", provider: "openai" },
+];
 
 export default function InterviewSettings({ selectedJob }) {
   const [personality, setPersonality] = useState("Professional");
   const [type, setType] = useState("Technical");
+  const [voice, setVoice] = useState("shimmer");
   const [jobContext, setJobContext] = useState("");
   const [generating, setGenerating] = useState(false);
   const [rationale, setRationale] = useState("");
+  const [previewing, setPreviewing] = useState(false);
+  const audioRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +37,25 @@ export default function InterviewSettings({ selectedJob }) {
       setJobContext(parts.join(" "));
     }
   }, [selectedJob]);
+
+  async function previewVoice() {
+    if (previewing) {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      setPreviewing(false);
+      return;
+    }
+    setPreviewing(true);
+    try {
+      const blob = await api.voicePreview(voice);
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setPreviewing(false); URL.revokeObjectURL(url); };
+      audio.play();
+    } catch {
+      setPreviewing(false);
+    }
+  }
 
   async function autoGenerate() {
     setGenerating(true);
@@ -93,6 +123,42 @@ export default function InterviewSettings({ selectedJob }) {
           </div>
         </div>
 
+        {/* Voice */}
+        <div>
+          <label className="text-xs font-medium text-muted uppercase tracking-wider mb-2 block">
+            Voice
+          </label>
+          <div className="flex items-center gap-2">
+            <div className="flex flex-wrap gap-1.5">
+              {voices.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setVoice(v.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    voice === v.id
+                      ? "bg-[#1A1A1A] text-white"
+                      : "bg-background text-muted hover:bg-[#EAEAE5]"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={previewVoice}
+              disabled={previewing}
+              className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-background border border-panel-border hover:bg-[#EAEAE5] transition-all cursor-pointer disabled:opacity-50"
+              title="Preview voice"
+            >
+              {previewing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-muted" />
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Job Offer / Project Context */}
         <div className="flex-1 flex flex-col">
           <label className="text-xs font-medium text-muted uppercase tracking-wider mb-1.5 block">
@@ -126,7 +192,7 @@ export default function InterviewSettings({ selectedJob }) {
             {generating ? "Generating..." : "Generate"}
           </button>
           <button
-            onClick={() => navigate("/interview/session", { state: { personality, interview_type: type, job_context: jobContext, job_slug: selectedJob?.slug } })}
+            onClick={() => navigate("/interview/session", { state: { personality, interview_type: type, voice, job_context: jobContext, job_slug: selectedJob?.slug } })}
             className="flex-[2] flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             <Phone className="w-4 h-4" />

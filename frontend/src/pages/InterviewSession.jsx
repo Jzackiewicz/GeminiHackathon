@@ -65,6 +65,7 @@ export default function InterviewSession() {
         const data = await api.startInterview({
           personality: settings.personality || "Professional",
           interview_type: settings.interview_type || "Technical",
+          voice: settings.voice || "shimmer",
           job_context: settings.job_context || "",
           job_slug: settings.job_slug || null,
         });

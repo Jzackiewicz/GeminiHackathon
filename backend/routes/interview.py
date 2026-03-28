@@ -2,7 +2,8 @@ import json
 import os
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from db import get_db
@@ -21,6 +22,7 @@ class InterviewUpdateReview(BaseModel):
 class InterviewStartRequest(BaseModel):
     personality: str = "Professional"
     interview_type: str = "technical"
+    voice: str = "shimmer"
     job_context: str = ""
     job_slug: str | None = None
 
@@ -53,6 +55,33 @@ router = APIRouter(prefix="/api/interviews")
 @router.get("/vapi-config")
 def vapi_config():
     return {"public_key": os.getenv("VAPI_PUBLIC_KEY", "")}
+
+
+@router.get("/voice-preview")
+async def voice_preview(voice: str = Query("nova")):
+    """Generate a short TTS sample using OpenAI's API."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "OPENAI_API_KEY not configured")
+
+    allowed = {"alloy", "echo", "fable", "onyx", "nova", "shimmer"}
+    if voice not in allowed:
+        raise HTTPException(400, f"Unknown voice: {voice}")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post(
+            "https://api.openai.com/v1/audio/speech",
+            headers={"Authorization": f"Bearer {api_key}"},
+            json={
+                "model": "tts-1",
+                "voice": voice,
+                "input": "Hi there! I'll be your interviewer today. Let's get started.",
+            },
+        )
+        if resp.status_code != 200:
+            raise HTTPException(502, f"OpenAI TTS error: {resp.status_code}")
+
+        return Response(content=resp.content, media_type="audio/mpeg")
 
 
 @router.post("/auto-configure")
@@ -181,6 +210,7 @@ def start_interview(body: InterviewStartRequest, user_id: int = Depends(get_curr
         requirements=requirements,
         difficulty=difficulty,
         interview_type=interview_type,
+        voice_id=body.voice,
     )
 
     cur = db.execute(
