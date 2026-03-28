@@ -68,6 +68,8 @@ export const api = {
   debugCareerAdvise: (params) =>
     request("/debug/career/advise", { method: "POST", body: JSON.stringify(params) }),
   debugMockJobs: () => request("/debug/jobs/mock"),
+  debugCacheStats: () => request("/debug/cache/stats"),
+  debugCacheClear: () => request("/debug/cache", { method: "DELETE" }),
   debugCVToPdf: async (html) => {
     const res = await fetch(`${API_BASE}/debug/cv/pdf`, {
       method: "POST",

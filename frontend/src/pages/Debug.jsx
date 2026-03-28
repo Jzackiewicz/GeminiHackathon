@@ -99,7 +99,10 @@ export default function Debug() {
     <div className="min-h-screen bg-gray-950 text-gray-100 -m-8 p-8"><div className="max-w-5xl mx-auto">
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">Debug Dashboard</h1>
-        <a href="/" className="text-sm text-gray-400 hover:text-white transition">← Back to app</a>
+        <div className="flex items-center gap-4">
+          <CacheIndicator />
+          <a href="/" className="text-sm text-gray-400 hover:text-white transition">← Back to app</a>
+        </div>
       </header>
 
       <div className="space-y-6">
@@ -1570,6 +1573,46 @@ function CareerAdvisor({ analysis, githubData }) {
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+
+function CacheIndicator() {
+  const [stats, setStats] = useState(null);
+  const [clearing, setClearing] = useState(false);
+
+  useEffect(() => {
+    const poll = setInterval(() => {
+      api.debugCacheStats().then(setStats).catch(() => {});
+    }, 5000);
+    api.debugCacheStats().then(setStats).catch(() => {});
+    return () => clearInterval(poll);
+  }, []);
+
+  async function clearCache() {
+    setClearing(true);
+    try {
+      await api.debugCacheClear();
+      setStats({ entries: 0 });
+    } catch {}
+    setClearing(false);
+  }
+
+  if (!stats) return null;
+
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="text-gray-500">Cache: <span className="text-gray-300">{stats.entries}</span> entries</span>
+      {stats.entries > 0 && (
+        <button
+          onClick={clearCache}
+          disabled={clearing}
+          className="px-2 py-0.5 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400 transition disabled:opacity-50"
+        >
+          {clearing ? "..." : "Clear"}
+        </button>
       )}
     </div>
   );

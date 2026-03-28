@@ -18,12 +18,14 @@ from services.vapi import create_interview_assistant, create_job_discovery_assis
 from services.prompts import get_prompt
 from services import logstream
 from services.stitch import start_generation, get_job, build_cv_prompt
+from services.cache import cached, cache_stats, invalidate_all as cache_invalidate_all
 
 router = APIRouter(prefix="/api/debug")
 log = logging.getLogger("debug")
 
 
 @router.get("/scrape/{username}")
+@cached
 async def debug_scrape(username: str, authorization: str = Header(None)):
     """Scrape a GitHub user and return what would be sent to Gemini."""
     # Try to use the logged-in user's GitHub token for private repo access
@@ -57,6 +59,7 @@ async def debug_scrape(username: str, authorization: str = Header(None)):
 
 
 @router.post("/analyze")
+@cached
 async def debug_analyze(body: dict):
     """Run Gemini analysis on previously scraped GitHub data."""
     log.info("Starting Gemini profile analysis")
@@ -193,6 +196,7 @@ class InterviewReviewRequest(BaseModel):
 
 
 @router.post("/vapi/review")
+@cached
 def review_interview(body: InterviewReviewRequest):
     """Use Gemini to review an interview transcript with full profile context."""
     # Format transcript as readable text
@@ -301,6 +305,7 @@ class CVGenerateRequest(BaseModel):
 
 
 @router.post("/cv/generate")
+@cached
 async def generate_cv(body: CVGenerateRequest):
     """Start async CV generation via Google Stitch. Returns a job_id for polling."""
     log.info("Starting CV generation")
@@ -328,6 +333,7 @@ def cv_status(job_id: str):
 
 
 @router.post("/cv/preview-prompt")
+@cached
 def cv_preview_prompt(body: CVGenerateRequest):
     """Preview the Stitch prompt that would be generated from the given data."""
     try:
@@ -350,6 +356,7 @@ class CareerAdvisorRequest(BaseModel):
 
 
 @router.post("/career/advise")
+@cached
 def career_advise(body: CareerAdvisorRequest):
     """Generate career suggestions from full profile context."""
     # Build profile section
@@ -435,6 +442,7 @@ class HtmlToPdfRequest(BaseModel):
 
 
 @router.post("/cv/pdf")
+@cached
 async def convert_to_pdf(body: HtmlToPdfRequest):
     """Convert HTML to PDF using Puppeteer + Chromium."""
     script = Path(__file__).resolve().parent.parent / "html_to_pdf.mjs"
@@ -460,6 +468,17 @@ async def convert_to_pdf(body: HtmlToPdfRequest):
             return {"error": result.stderr or "PDF conversion failed"}
 
     return FileResponse(pdf_path, media_type="application/pdf", filename="cv.pdf")
+
+
+@router.get("/cache/stats")
+def get_cache_stats():
+    return cache_stats()
+
+
+@router.delete("/cache")
+def clear_cache():
+    cache_invalidate_all()
+    return {"ok": True}
 
 
 @router.get("/logs")
