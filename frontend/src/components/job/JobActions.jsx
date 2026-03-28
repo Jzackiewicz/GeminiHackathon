@@ -55,7 +55,9 @@ export default function JobActions({ jobId, offer }) {
       if (offer) {
         params.job_title = offer.title;
         params.company = offer.company;
-        params.requirements = offer.requirements;
+        params.requirements = Array.isArray(offer.requirements)
+          ? offer.requirements.join("\n")
+          : offer.requirements;
       }
       const resp = await api.generateCV(params);
       if (resp.error) {

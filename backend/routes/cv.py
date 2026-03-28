@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/cv")
 
 @router.post("/generate")
 async def generate_cv(
-    body: CVGenerateRequest | None = None,
+    body: CVGenerateRequest = CVGenerateRequest(),
     user_id: int = Depends(get_current_user),
 ):
     """Start CV generation using user's profile data from DB."""
@@ -50,9 +50,9 @@ async def generate_cv(
         except (json.JSONDecodeError, TypeError):
             pass
 
-    job_title = body.job_title if body else None
-    company = body.company if body else None
-    requirements = body.requirements if body else None
+    job_title = body.job_title
+    company = body.company
+    requirements = body.requirements
 
     try:
         job_id = await start_generation(
