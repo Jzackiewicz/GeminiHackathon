@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,8 +52,13 @@ function MatchRing({ score }) {
 }
 
 export default function JobOfferCard({ offer }) {
+  const navigate = useNavigate();
+
   return (
-    <Card className="border-panel-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
+    <Card
+      className="border-panel-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
+      onClick={() => navigate(`/job/${offer.id}`)}
+    >
       <CardContent className="p-4 flex items-center gap-3">
         <MatchRing score={offer.matchScore} />
         <div className="flex-1 min-w-0">

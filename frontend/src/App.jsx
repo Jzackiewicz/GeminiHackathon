@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import GitHubCallback from "./pages/GitHubCallback";
 import Dashboard from "./pages/Dashboard";
 import Interview from "./pages/Interview";
+import JobDetail from "./pages/JobDetail";
 import Debug from "./pages/Debug";
 
 function PrivateRoute({ children }) {
@@ -16,6 +17,14 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/github/callback" element={<GitHubCallback />} />
       <Route path="/debug" element={<Debug />} />
+      <Route
+        path="/job/:id"
+        element={
+          <PrivateRoute>
+            <JobDetail />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/interview"
         element={
