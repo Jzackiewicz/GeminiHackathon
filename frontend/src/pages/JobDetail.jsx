@@ -90,7 +90,7 @@ export default function JobDetail() {
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden pt-16 bg-surface-container-low">
         {/* Left: Job Offer Content — scrolls independently */}
-        <div className="w-full lg:w-[58%] shrink-0 min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-6">
+        <div className="w-full lg:w-[58%] shrink-0 min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-6 lg:pr-3">
           <JobOfferContent offer={contentOffer} />
         </div>
 

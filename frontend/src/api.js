@@ -124,6 +124,7 @@ export const api = {
     request("/debug/jobs/score", { method: "POST", body: JSON.stringify(params) }),
   debugCacheStats: () => request("/debug/cache/stats"),
   debugCacheClear: () => request("/debug/cache", { method: "DELETE" }),
+  debugWipeDb: () => request("/debug/wipe-db", { method: "DELETE" }),
   debugCVToPdf: async (html) => {
     const res = await fetch(`${API_BASE}/debug/cv/pdf`, {
       method: "POST",

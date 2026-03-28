@@ -112,6 +112,7 @@ export default function Debug() {
         <h1 className="text-2xl font-bold">Debug Dashboard</h1>
         <div className="flex items-center gap-4">
           <CacheIndicator />
+          <WipeDbButton />
           <a href="/" className="text-sm text-gray-400 hover:text-white transition">← Back to app</a>
         </div>
       </header>
@@ -1949,6 +1950,32 @@ function CareerAdvisor({ analysis, githubData }) {
   );
 }
 
+
+function WipeDbButton() {
+  const [wiping, setWiping] = useState(false);
+
+  async function handleWipe() {
+    if (!confirm("This will DELETE all users, profiles, interviews, jobs, and scores. Continue?")) return;
+    setWiping(true);
+    try {
+      await api.debugWipeDb();
+      alert("Database wiped. Reload the page.");
+    } catch (err) {
+      alert("Wipe failed: " + err.message);
+    }
+    setWiping(false);
+  }
+
+  return (
+    <button
+      onClick={handleWipe}
+      disabled={wiping}
+      className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-medium transition disabled:opacity-50"
+    >
+      {wiping ? "Wiping..." : "Wipe DB"}
+    </button>
+  );
+}
 
 function CacheIndicator() {
   const [stats, setStats] = useState(null);

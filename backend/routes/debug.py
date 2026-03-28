@@ -682,6 +682,20 @@ def debug_jobs_score(body: JobScoreRequest):
         return {"error": str(e)}
 
 
+@router.delete("/wipe-db")
+def wipe_database():
+    """Drop all user data and re-initialize the database. Keeps schema intact."""
+    from db import get_db, init_db
+    conn = get_db()
+    tables = ["offer_scores", "interviews", "job_offers", "profiles", "users",
+              "jjit_offers", "fetch_state"]
+    for t in tables:
+        conn.execute(f"DELETE FROM {t}")
+    conn.commit()
+    conn.close()
+    return {"ok": True, "wiped": tables}
+
+
 @router.get("/logs")
 async def stream_logs():
     """SSE endpoint streaming live backend logs."""
