@@ -3,27 +3,39 @@ import httpx
 
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GITHUB_HEADERS = {}
-if GITHUB_TOKEN:
-    GITHUB_HEADERS["Authorization"] = f"Bearer {GITHUB_TOKEN}"
-GITHUB_HEADERS["Accept"] = "application/vnd.github+json"
-GITHUB_HEADERS["X-GitHub-Api-Version"] = "2022-11-28"
 
 MAX_REPOS_LANGUAGES = 15  # repos to fetch per-repo language breakdown for
 MAX_REPOS_README = 5      # repos to fetch READMEs for
 README_MAX_CHARS = 3000   # truncate long READMEs
 
 
-async def fetch_github_profile(username: str) -> dict:
+def _github_headers(token: str | None = None) -> dict:
+    """Build GitHub API headers, preferring the user's OAuth token."""
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    tok = token or GITHUB_TOKEN
+    if tok:
+        headers["Authorization"] = f"Bearer {tok}"
+    return headers
+
+
+async def fetch_github_profile(username: str, token: str | None = None) -> dict:
     """Quick fetch — profile + repo list + top languages. Used for initial connect."""
-    async with httpx.AsyncClient(headers=GITHUB_HEADERS, timeout=15) as client:
-        user_resp = await client.get(f"https://api.github.com/users/{username}")
+    headers = _github_headers(token)
+    async with httpx.AsyncClient(headers=headers, timeout=15) as client:
+        # Use /user for authenticated user (includes private repos), /users/{} for public
+        if token:
+            user_resp = await client.get("https://api.github.com/user")
+        else:
+            user_resp = await client.get(f"https://api.github.com/users/{username}")
         user_resp.raise_for_status()
         user = user_resp.json()
 
         repos_resp = await client.get(
-            f"https://api.github.com/users/{username}/repos",
-            params={"sort": "updated", "per_page": 30, "type": "owner"},
+            "https://api.github.com/user/repos" if token else f"https://api.github.com/users/{username}/repos",
+            params={"sort": "updated", "per_page": 30, "affiliation": "owner"} if token else {"sort": "updated", "per_page": 30, "type": "owner"},
         )
         repos_resp.raise_for_status()
         repos = repos_resp.json()
@@ -50,23 +62,31 @@ async def fetch_github_profile(username: str) -> dict:
     }
 
 
-async def deep_scrape_github(username: str) -> dict:
+async def deep_scrape_github(username: str, token: str | None = None) -> dict:
     """Full scrape — profile, repos, per-repo languages, READMEs, topics, activity.
 
     This is the heavy version used for Gemini analysis.
+    If token is provided, includes private repos.
     """
-    async with httpx.AsyncClient(headers=GITHUB_HEADERS, timeout=20) as client:
+    headers = _github_headers(token)
+    async with httpx.AsyncClient(headers=headers, timeout=20) as client:
         # 1. Profile
-        user = (await client.get(f"https://api.github.com/users/{username}")).json()
+        if token:
+            user = (await client.get("https://api.github.com/user")).json()
+        else:
+            user = (await client.get(f"https://api.github.com/users/{username}")).json()
 
         # 2. Repos (all pages, owner only, skip forks)
+        repos_url = "https://api.github.com/user/repos" if token else f"https://api.github.com/users/{username}/repos"
         all_repos = []
         page = 1
         while True:
-            resp = await client.get(
-                f"https://api.github.com/users/{username}/repos",
-                params={"sort": "pushed", "type": "owner", "per_page": 100, "page": page},
-            )
+            params = {"sort": "pushed", "per_page": 100, "page": page}
+            if token:
+                params["affiliation"] = "owner"
+            else:
+                params["type"] = "owner"
+            resp = await client.get(repos_url, params=params)
             resp.raise_for_status()
             batch = resp.json()
             if not batch:
@@ -104,6 +124,7 @@ async def deep_scrape_github(username: str) -> dict:
                 repo_details.append({
                     "name": repo["name"],
                     "description": repo.get("description"),
+                    "private": repo.get("private", False),
                     "stars": repo.get("stargazers_count", 0),
                     "forks": repo.get("forks_count", 0),
                     "topics": repo.get("topics", []),

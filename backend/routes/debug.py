@@ -2,8 +2,10 @@ import asyncio
 import json
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
+from db import get_db
+from dependencies import get_current_user
 from services.scraper import deep_scrape_github
 from services.prompts import get_prompt
 from services import logstream
@@ -13,10 +15,23 @@ log = logging.getLogger("debug")
 
 
 @router.get("/scrape/{username}")
-async def debug_scrape(username: str):
+async def debug_scrape(username: str, authorization: str = Header(None)):
     """Scrape a GitHub user and return what would be sent to Gemini."""
+    # Try to use the logged-in user's GitHub token for private repo access
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        from services.auth import decode_token
+        user_id = decode_token(authorization.removeprefix("Bearer ").strip())
+        if user_id:
+            db = get_db()
+            row = db.execute("SELECT github_token FROM users WHERE id = ?", (user_id,)).fetchone()
+            db.close()
+            if row and row["github_token"]:
+                token = row["github_token"]
+                log.info(f"Using OAuth token for {username} (private repos included)")
+
     log.info(f"Starting deep scrape for {username}")
-    github_data = await deep_scrape_github(username)
+    github_data = await deep_scrape_github(username, token=token)
     log.info(f"Scrape complete: {len(github_data.get('repos', []))} repos, {len(github_data.get('languages', {}))} languages")
     context = json.dumps(github_data, indent=2, default=str)
     system_prompt = get_prompt("profile_analysis", "system")

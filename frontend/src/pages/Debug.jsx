@@ -22,6 +22,9 @@ export default function Debug() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [repoFilter, setRepoFilter] = useState("");
+  const [showPrivate, setShowPrivate] = useState(true);
+  const [showPublic, setShowPublic] = useState(true);
 
   const [logs, setLogs] = useState([]);
   const [logsOpen, setLogsOpen] = useState(true);
@@ -196,10 +199,47 @@ export default function Debug() {
               {/* Repos */}
               <CollapsibleSection title={`Repos detail (${(gh.repos || []).length})`}>
                 <div className="space-y-3">
-                  {(gh.repos || []).map((repo) => (
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Filter repos..."
+                      value={repoFilter}
+                      onChange={(e) => setRepoFilter(e.target.value)}
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+                    />
+                    <label className="flex items-center gap-1 text-xs text-gray-400">
+                      <input type="checkbox" checked={showPublic} onChange={() => setShowPublic(!showPublic)} className="rounded" />
+                      Public
+                    </label>
+                    <label className="flex items-center gap-1 text-xs text-gray-400">
+                      <input type="checkbox" checked={showPrivate} onChange={() => setShowPrivate(!showPrivate)} className="rounded" />
+                      Private
+                    </label>
+                  </div>
+                  {(gh.repos || [])
+                    .filter((r) => {
+                      if (r.private && !showPrivate) return false;
+                      if (!r.private && !showPublic) return false;
+                      if (repoFilter) {
+                        const q = repoFilter.toLowerCase();
+                        return (
+                          r.name.toLowerCase().includes(q) ||
+                          (r.description || "").toLowerCase().includes(q) ||
+                          Object.keys(r.languages || {}).some((l) => l.toLowerCase().includes(q)) ||
+                          (r.topics || []).some((t) => t.toLowerCase().includes(q))
+                        );
+                      }
+                      return true;
+                    })
+                    .map((repo) => (
                     <div key={repo.name} className="p-3 bg-gray-800 rounded-lg space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-blue-400">{repo.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-blue-400">{repo.name}</span>
+                          {repo.private && (
+                            <span className="px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs">private</span>
+                          )}
+                        </div>
                         <span className="text-gray-500 text-xs">★ {repo.stars} · ⑂ {repo.forks}</span>
                       </div>
                       {repo.description && <p className="text-gray-400 text-xs">{repo.description}</p>}

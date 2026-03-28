@@ -20,6 +20,7 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT,
             github_id INTEGER UNIQUE,
+            github_token TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 

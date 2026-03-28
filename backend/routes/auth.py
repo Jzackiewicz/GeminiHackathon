@@ -74,6 +74,9 @@ async def github_callback(body: GitHubCallbackRequest):
                 (user_id, gh_user["login"]),
             )
         db.commit()
+    # Always update the token (it may have been refreshed)
+    db.execute("UPDATE users SET github_token = ? WHERE id = ?", (gh_user["access_token"], user_id))
+    db.commit()
     db.close()
     return Token(access_token=create_access_token(user_id))
 

@@ -26,7 +26,7 @@ export default function Login() {
     try {
       const { client_id } = await api.githubClientId();
       const redirect_uri = window.location.origin + "/auth/github/callback";
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=read:user%20user:email`;
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent("repo read:user user:email")}`;
     } catch (err) {
       setError(err.message);
     }

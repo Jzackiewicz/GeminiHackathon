@@ -78,4 +78,5 @@ async def exchange_github_code(code: str) -> dict:
         "email": email or f"{user['login']}@github.noemail",
         "login": user["login"],
         "name": user.get("name"),
+        "access_token": access_token,
     }

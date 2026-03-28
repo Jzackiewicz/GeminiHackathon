@@ -51,10 +51,18 @@ def get_profile(user_id: int = Depends(get_current_user)):
     return _profile_from_row(row)
 
 
+def _get_github_token(user_id: int) -> str | None:
+    db = get_db()
+    row = db.execute("SELECT github_token FROM users WHERE id = ?", (user_id,)).fetchone()
+    db.close()
+    return row["github_token"] if row and row["github_token"] else None
+
+
 def _run_deep_analysis(user_id: int, username: str):
     """Background task: deep scrape GitHub + Gemini analysis."""
     try:
-        github_data = asyncio.run(deep_scrape_github(username))
+        token = _get_github_token(user_id)
+        github_data = asyncio.run(deep_scrape_github(username, token=token))
         analysis = analyze_github_profile(github_data)
 
         db = get_db()
@@ -96,7 +104,8 @@ async def connect_github(
     user_id: int = Depends(get_current_user),
 ):
     # Quick scrape for immediate feedback
-    gh = await fetch_github_profile(body.username)
+    token = _get_github_token(user_id)
+    gh = await fetch_github_profile(body.username, token=token)
     techs = json.dumps(gh["languages"])
     summary = f"{gh.get('name') or body.username} — {gh.get('bio') or 'No bio'}. {gh['public_repos']} public repos. Top languages: {', '.join(gh['languages'][:5])}"
 
