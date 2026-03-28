@@ -57,6 +57,9 @@ export const api = {
     request(`/interviews/${id}/complete`, { method: "POST", body: JSON.stringify({ transcript }) }),
   interviewReview: (id, transcript) =>
     request(`/interviews/${id}/review`, { method: "POST", body: JSON.stringify({ transcript }) }),
+  generateCV: (params = {}) =>
+    request("/cv/generate", { method: "POST", body: JSON.stringify(params) }),
+  cvStatus: (jobId) => request(`/cv/status/${jobId}`),
   saveInterview: (data) =>
     request("/interviews", { method: "POST", body: JSON.stringify(data) }),
   listInterviews: () => request("/interviews"),

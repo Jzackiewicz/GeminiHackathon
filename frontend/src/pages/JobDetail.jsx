@@ -59,7 +59,7 @@ export default function JobDetail() {
 
           {/* Actions (takes remaining space) */}
           <div className="flex-1 min-h-0">
-            <JobActions jobId={jobId} />
+            <JobActions jobId={jobId} offer={offer} />
           </div>
         </div>
       </div>

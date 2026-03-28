@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import init_db
-from routes import auth, profile, jobs, interview, debug
+from routes import auth, profile, jobs, interview, cv, debug
 from services import logstream
 
 
@@ -33,6 +33,7 @@ app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(jobs.router)
 app.include_router(interview.router)
+app.include_router(cv.router)
 app.include_router(debug.router)
 
 
