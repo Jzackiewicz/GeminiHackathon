@@ -76,6 +76,20 @@ export const api = {
   debugMockJobs: () => request("/debug/jobs/mock"),
   debugAutoConfigInterview: (params) =>
     request("/debug/vapi/auto-configure", { method: "POST", body: JSON.stringify(params) }),
+  debugJobsFetch: (params) =>
+    request("/debug/jobs/fetch", { method: "POST", body: JSON.stringify(params) }),
+  debugJobsFetchStatus: () => request("/debug/jobs/fetch/status"),
+  debugJobsOffers: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.experience_level) q.set("experience_level", params.experience_level);
+    if (params.skills) params.skills.forEach((s) => q.append("skill", s));
+    if (params.workplace_type) q.set("workplace_type", params.workplace_type);
+    if (params.limit) q.set("limit", params.limit);
+    if (params.offset) q.set("offset", params.offset);
+    return request(`/debug/jobs/offers?${q.toString()}`);
+  },
+  debugJobsScore: (params) =>
+    request("/debug/jobs/score", { method: "POST", body: JSON.stringify(params) }),
   debugCacheStats: () => request("/debug/cache/stats"),
   debugCacheClear: () => request("/debug/cache", { method: "DELETE" }),
   debugCVToPdf: async (html) => {

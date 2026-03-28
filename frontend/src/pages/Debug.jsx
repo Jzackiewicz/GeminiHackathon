@@ -405,6 +405,9 @@ export default function Debug() {
           )}
         </div>
 
+        {/* Job Search */}
+        <JobSearchDebug analysis={analysis} />
+
         {/* CV Generation via Stitch */}
         <StitchCV analysis={analysis} githubData={result?.github_data} />
 
@@ -607,6 +610,312 @@ function InterviewHistory() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+
+function JobSearchDebug({ analysis }) {
+  const [fetching, setFetching] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [scoring, setScoring] = useState(false);
+  const [scored, setScored] = useState(null);
+  const [error, setError] = useState("");
+  const [expFilter, setExpFilter] = useState("");
+  const [skillFilter, setSkillFilter] = useState("");
+  const [wpFilter, setWpFilter] = useState("");
+  const pollRef = useRef(null);
+
+  // Check existing fetch status on mount
+  useEffect(() => {
+    api.debugJobsFetchStatus().then(setFetchStatus).catch(() => {});
+  }, []);
+
+  function autoConfigure() {
+    if (!analysis) return;
+    if (analysis.experience_level) setExpFilter(analysis.experience_level);
+    const top = (analysis.technologies || [])
+      .filter((t) => t.proficiency === "advanced" || t.proficiency === "expert")
+      .slice(0, 5)
+      .map((t) => t.name);
+    if (top.length) setSkillFilter(top.join(", "));
+    // Clear workplace filter — don't assume
+    setWpFilter("");
+  }
+
+  // Auto-derive filters from analysis on first load
+  useEffect(() => {
+    if (!analysis) return;
+    if (analysis.experience_level && !expFilter) setExpFilter(analysis.experience_level);
+    if (!skillFilter) {
+      const top = (analysis.technologies || [])
+        .filter((t) => t.proficiency === "advanced" || t.proficiency === "expert")
+        .slice(0, 5)
+        .map((t) => t.name);
+      if (top.length) setSkillFilter(top.join(", "));
+    }
+  }, [analysis]);
+
+  async function startFetch() {
+    setError("");
+    setFetching(true);
+    setScored(null);
+    const skills = skillFilter.split(",").map((s) => s.trim()).filter(Boolean);
+    const experience_levels = expFilter ? [expFilter] : null;
+    try {
+      await api.debugJobsFetch({
+        skills: skills.length ? skills : null,
+        experience_levels,
+        workplace_type: wpFilter || null,
+      });
+
+      // Poll for completion
+      pollRef.current = setInterval(async () => {
+        try {
+          const status = await api.debugJobsFetchStatus();
+          setFetchStatus(status);
+          if (status.status === "done" || status.status === "error" || status.status === "idle") {
+            clearInterval(pollRef.current);
+            setFetching(false);
+            if (status.status !== "error") loadOffers();
+          }
+        } catch (err) {
+          clearInterval(pollRef.current);
+          setFetching(false);
+        }
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+      setFetching(false);
+    }
+  }
+
+  async function loadOffers() {
+    try {
+      const skills = skillFilter.split(",").map((s) => s.trim()).filter(Boolean);
+      const data = await api.debugJobsOffers({
+        experience_level: expFilter || undefined,
+        skills: skills.length ? skills : undefined,
+        workplace_type: wpFilter || undefined,
+        limit: 30,
+      });
+      setOffers(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function scoreOffers() {
+    if (!analysis) return;
+    setScoring(true);
+    setError("");
+    try {
+      const resp = await api.debugJobsScore({
+        profile_analysis: analysis,
+        limit: 12,
+      });
+      if (resp.error) {
+        setError(resp.error);
+      } else {
+        setScored(resp.scored || []);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setScoring(false);
+    }
+  }
+
+  useEffect(() => {
+    return () => clearInterval(pollRef.current);
+  }, []);
+
+  return (
+    <div className="bg-gray-900 rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Job Search (JustJoinIT)</h2>
+        {fetchStatus && (
+          <span className="text-xs text-gray-500">
+            {fetchStatus.total_offers} offers cached
+            {fetchStatus.last_fetched_at && ` · last fetch ${fetchStatus.last_fetched_at}`}
+          </span>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-3 gap-2">
+        <select
+          value={expFilter}
+          onChange={(e) => setExpFilter(e.target.value)}
+          className="px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+        >
+          <option value="">Any experience</option>
+          <option value="junior">Junior</option>
+          <option value="mid">Mid</option>
+          <option value="senior">Senior</option>
+          <option value="lead">Lead</option>
+        </select>
+        <input
+          value={skillFilter}
+          onChange={(e) => setSkillFilter(e.target.value)}
+          placeholder="Skills (comma-separated)"
+          className="px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+        />
+        <select
+          value={wpFilter}
+          onChange={(e) => setWpFilter(e.target.value)}
+          className="px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+        >
+          <option value="">Any workplace</option>
+          <option value="remote">Remote</option>
+          <option value="partly_remote">Hybrid</option>
+          <option value="office">Office</option>
+        </select>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          onClick={startFetch}
+          disabled={fetching}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition disabled:opacity-50"
+        >
+          {fetching ? "Fetching..." : "Fetch Offers"}
+        </button>
+        {analysis && (
+          <button
+            onClick={autoConfigure}
+            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 rounded-lg text-sm font-medium transition"
+          >
+            Auto-Configure
+          </button>
+        )}
+        {fetchStatus?.total_offers > 0 && (
+          <button
+            onClick={loadOffers}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
+          >
+            Browse Cached
+          </button>
+        )}
+        {fetchStatus?.total_offers > 0 && analysis && (
+          <button
+            onClick={scoreOffers}
+            disabled={scoring}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition disabled:opacity-50"
+          >
+            {scoring ? "Scoring with Gemini..." : "Score Against Profile"}
+          </button>
+        )}
+        {!analysis && fetchStatus?.total_offers > 0 && (
+          <span className="text-xs text-gray-500 self-center">Run Gemini analysis first to score offers</span>
+        )}
+      </div>
+
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {/* Scored results */}
+      {scored && scored.length > 0 && (
+        <CollapsibleSection title={`Scored Offers (${scored.length})`} defaultOpen>
+          <div className="space-y-2">
+            {scored.map((item) => (
+              <div key={item.slug || item.offer?.slug} className="p-3 bg-gray-800 rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-blue-400">{item.offer?.title || item.title}</span>
+                    <span className="text-gray-500 text-xs ml-2">{item.offer?.company_name}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded font-bold text-sm ${
+                    item.overall_score >= 75 ? "bg-green-500/20 text-green-400" :
+                    item.overall_score >= 50 ? "bg-yellow-500/20 text-yellow-400" :
+                    "bg-red-500/20 text-red-400"
+                  }`}>{item.overall_score}/100</span>
+                </div>
+
+                <p className="text-xs text-gray-400">{item.reasoning}</p>
+
+                {item.skill_match && (
+                  <div className="flex flex-wrap gap-1">
+                    {(item.skill_match.matched || []).map((s) => (
+                      <span key={s} className="px-1.5 py-0.5 bg-green-500/15 text-green-400 rounded text-xs">{s}</span>
+                    ))}
+                    {(item.skill_match.missing || []).map((s) => (
+                      <span key={s} className="px-1.5 py-0.5 bg-red-500/15 text-red-400 rounded text-xs">{s}</span>
+                    ))}
+                    {(item.skill_match.bonus || []).map((s) => (
+                      <span key={s} className="px-1.5 py-0.5 bg-blue-500/15 text-blue-400 rounded text-xs">{s}</span>
+                    ))}
+                  </div>
+                )}
+
+                {item.experience_fit && (
+                  <div className="text-xs text-gray-500">
+                    Experience: <span className={
+                      item.experience_fit.level_match === "exact" ? "text-green-400" :
+                      item.experience_fit.level_match === "above" ? "text-blue-400" : "text-yellow-400"
+                    }>{item.experience_fit.level_match}</span>
+                    {item.experience_fit.reasoning && ` — ${item.experience_fit.reasoning}`}
+                  </div>
+                )}
+
+                {item.suggestions?.length > 0 && (
+                  <div className="space-y-1">
+                    {item.suggestions.map((s, i) => (
+                      <div key={i} className="text-xs p-1.5 bg-gray-700/50 rounded">
+                        <span className={`font-medium ${
+                          s.priority === "high" ? "text-red-400" :
+                          s.priority === "medium" ? "text-yellow-400" : "text-gray-400"
+                        }`}>{s.type}</span>
+                        <span className="text-gray-300"> {s.title}</span>
+                        {s.description && <span className="text-gray-500"> — {s.description}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2 text-xs text-gray-600">
+                  {item.offer?.salary_display && <span>{item.offer.salary_display}</span>}
+                  {item.offer?.city && <span>{item.offer.city}</span>}
+                  {item.offer?.workplace_type && <span>{item.offer.workplace_type}</span>}
+                  {item.offer?.url && (
+                    <a href={item.offer.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View on JJIT</a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {scored && scored.length === 0 && (
+        <p className="text-gray-500 text-sm">No offers matched your profile skills. Try fetching more offers or broadening filters.</p>
+      )}
+
+      {/* Unscored offer list */}
+      {!scored && offers.length > 0 && (
+        <CollapsibleSection title={`Cached Offers (${offers.length})`} defaultOpen>
+          <div className="space-y-1">
+            {offers.map((o) => (
+              <div key={o.slug} className="p-2 bg-gray-800 rounded flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-blue-400 font-medium">{o.title}</span>
+                  <span className="text-gray-500 ml-2">{o.company_name}</span>
+                  <div className="flex gap-1 mt-0.5">
+                    {(o.required_skills || []).slice(0, 5).map((s) => (
+                      <span key={s} className="px-1 py-0.5 bg-gray-700 rounded text-xs">{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right text-gray-500 shrink-0 ml-2">
+                  <div>{o.salary_display || "Undisclosed"}</div>
+                  <div>{o.city || "Remote"} · {o.experience_level}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
     </div>
   );
 }

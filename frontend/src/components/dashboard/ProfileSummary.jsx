@@ -84,15 +84,18 @@ export default function ProfileSummary({ profile, onUpdate }) {
                   Skills
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {profile.technologies.map((t) => (
-                    <Badge
-                      key={t}
-                      variant="secondary"
-                      className="text-xs font-normal"
-                    >
-                      {t}
-                    </Badge>
-                  ))}
+                  {profile.technologies.map((t) => {
+                    const name = typeof t === "string" ? t : t.name;
+                    return (
+                      <Badge
+                        key={name}
+                        variant="secondary"
+                        className="text-xs font-normal"
+                      >
+                        {name}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </div>
             )}

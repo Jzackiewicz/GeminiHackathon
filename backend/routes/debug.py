@@ -13,11 +13,12 @@ from fastapi.responses import StreamingResponse, FileResponse
 from db import get_db
 from dependencies import get_current_user
 from services.scraper import deep_scrape_github
-from services.llm import analyze_github_profile, prompt_with_context
+from services.llm import analyze_github_profile, prompt_with_context, score_offers_against_profile
 from services.vapi import create_interview_assistant, create_job_discovery_assistant, delete_assistant
 from services.prompts import get_prompt
 from services import logstream
 from services.stitch import start_generation, get_job, build_cv_prompt
+from services.jjit import fetch_and_store_offers, get_fetch_status, get_cached_offers
 from services.cache import cached, cache_stats, invalidate_all as cache_invalidate_all
 
 router = APIRouter(prefix="/api/debug")
@@ -560,6 +561,125 @@ def get_cache_stats():
 def clear_cache():
     cache_invalidate_all()
     return {"ok": True}
+
+
+class JobFetchRequest(BaseModel):
+    skills: list[str] | None = None
+    experience_levels: list[str] | None = None
+    workplace_type: str | None = None
+    max_pages: int = 3
+
+
+@router.post("/jobs/fetch")
+async def debug_jobs_fetch(body: JobFetchRequest):
+    """Trigger a JustJoinIT fetch. Runs in background."""
+    log.info(f"Starting JJIT fetch: skills={body.skills}, exp={body.experience_levels}")
+    try:
+        asyncio.create_task(fetch_and_store_offers(
+            skills=body.skills,
+            experience_levels=body.experience_levels,
+            workplace_type=body.workplace_type,
+            max_pages=body.max_pages,
+        ))
+        return {"status": "fetching"}
+    except Exception as e:
+        log.error(f"JJIT fetch failed: {e}")
+        return {"error": str(e)}
+
+
+@router.get("/jobs/fetch/status")
+def debug_jobs_fetch_status():
+    """Check JJIT fetch progress."""
+    return get_fetch_status()
+
+
+@router.get("/jobs/offers")
+def debug_jobs_offers(
+    experience_level: str | None = None,
+    skill: list[str] | None = None,
+    workplace_type: str | None = None,
+    limit: int = 30,
+    offset: int = 0,
+):
+    """Browse cached JJIT offers with filters."""
+    exp_levels = [experience_level] if experience_level else None
+    return get_cached_offers(
+        experience_levels=exp_levels,
+        skills=skill,
+        workplace_type=workplace_type,
+        limit=limit,
+        offset=offset,
+    )
+
+
+class JobScoreRequest(BaseModel):
+    profile_analysis: dict
+    offer_slugs: list[str] | None = None  # if None, score all cached offers
+    limit: int = 12
+
+
+@router.post("/jobs/score")
+def debug_jobs_score(body: JobScoreRequest):
+    """Score cached offers against a provided profile (no auth needed)."""
+    log.info(f"Scoring offers against profile")
+
+    # Build profile dict from analysis (same shape as scorer expects)
+    profile = {
+        "technologies": body.profile_analysis.get("technologies", []),
+        "experience_level": body.profile_analysis.get("experience_level", ""),
+        "primary_role": body.profile_analysis.get("primary_role", ""),
+        "strengths": body.profile_analysis.get("strengths", []),
+        "interests": body.profile_analysis.get("interests", []),
+        "notable_projects": body.profile_analysis.get("notable_projects", []),
+        "summary": body.profile_analysis.get("summary", ""),
+    }
+
+    # Get offers to score
+    if body.offer_slugs:
+        all_offers = get_cached_offers(limit=200)
+        offers = [o for o in all_offers if o["slug"] in body.offer_slugs]
+    else:
+        # Derive skills from profile for filtering
+        skills = [t["name"] for t in profile.get("technologies", [])[:8]]
+        offers = get_cached_offers(skills=skills, limit=body.limit * 2)
+
+    if not offers:
+        return {"scored": [], "message": "No matching offers found. Fetch offers first."}
+
+    # Cap at limit
+    offers = offers[:body.limit]
+
+    try:
+        # Strip to compact form for scoring
+        compact = [
+            {
+                "slug": o["slug"],
+                "title": o["title"],
+                "company_name": o.get("company_name"),
+                "required_skills": o.get("required_skills", []),
+                "nice_to_have_skills": o.get("nice_to_have_skills", []),
+                "experience_level": o.get("experience_level"),
+                "workplace_type": o.get("workplace_type"),
+                "salary_display": o.get("salary_display"),
+                "city": o.get("city"),
+            }
+            for o in offers
+        ]
+        scored = score_offers_against_profile(profile, compact)
+
+        # Merge score data back with full offer info
+        score_by_slug = {s["slug"]: s for s in scored}
+        results = []
+        for o in offers:
+            s = score_by_slug.get(o["slug"])
+            if s:
+                results.append({"offer": o, **s})
+
+        results.sort(key=lambda x: x.get("overall_score", 0), reverse=True)
+        return {"scored": results}
+    except Exception as e:
+        log.error(f"Scoring failed: {e}")
+        return {"error": str(e)}
 
 
 @router.get("/logs")
