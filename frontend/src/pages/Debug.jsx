@@ -96,7 +96,7 @@ export default function Debug() {
   const payload = result?.gemini_payload;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-950 text-gray-100 -m-8 p-8"><div className="max-w-5xl mx-auto">
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">Debug Dashboard</h1>
         <a href="/" className="text-sm text-gray-400 hover:text-white transition">← Back to app</a>
@@ -391,7 +391,7 @@ export default function Debug() {
         {/* Interview History */}
         <InterviewHistory />
       </div>
-    </div>
+    </div></div>
   );
 }
 
