@@ -1,3 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    border-color: #E8E8E3;
+  }
+
+  body {
+    background-color: #F5F5F0;
+    color: #1A1A1A;
+  }
+
+  /* Custom scrollbar for the dashboard columns */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
+}
