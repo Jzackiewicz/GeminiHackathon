@@ -1,11 +1,10 @@
 import { useLocation, Link } from "react-router-dom";
-import { LogOut, Sparkles, LayoutDashboard, History } from "lucide-react";
+import { LogOut, Sparkles, LayoutDashboard } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Interviews", href: "/interview", icon: History },
 ];
 
 export default function TopBar({ user, onLogout }) {

@@ -20,7 +20,7 @@ export default function App() {
       <Route path="/auth/github/callback" element={<GitHubCallback />} />
       <Route path="/debug" element={<Debug />} />
       <Route
-        path="/job/:id"
+        path="/job/:slug"
         element={
           <PrivateRoute>
             <JobDetail />

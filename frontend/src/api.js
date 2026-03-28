@@ -50,6 +50,15 @@ export const api = {
   getSelectedJob: () => request("/jobs/selected"),
   selectJob: (job_offer_id) =>
     request("/jobs/select", { method: "POST", body: JSON.stringify({ job_offer_id }) }),
+  fetchJobs: (params = {}) =>
+    request("/jobs/fetch", { method: "POST", body: JSON.stringify(params) }),
+  fetchJobsStatus: () => request("/jobs/fetch/status"),
+  getJobDetail: (slug) => request(`/jobs/detail/${encodeURIComponent(slug)}`),
+  getScoredJobs: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.limit) q.set("limit", params.limit);
+    return request(`/jobs/scored?${q.toString()}`);
+  },
   vapiConfig: () => request("/interviews/vapi-config"),
   startInterview: (settings) =>
     request("/interviews/start", { method: "POST", body: JSON.stringify(settings) }),

@@ -51,36 +51,54 @@ function MatchRing({ score }) {
   );
 }
 
-export default function JobOfferCard({ offer }) {
+export default function JobOfferCard({ scored }) {
   const navigate = useNavigate();
+  const offer = scored.offer;
+  const score = scored.overall_score;
 
   return (
     <Card
       className="border-panel-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
-      onClick={() => navigate(`/job/${offer.id}`)}
+      onClick={() => navigate(`/job/${offer.slug}`)}
     >
       <CardContent className="p-4 flex items-center gap-3">
-        <MatchRing score={offer.matchScore} />
+        <MatchRing score={score} />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
             {offer.title}
           </h3>
-          <p className="text-xs text-muted font-medium">{offer.company}</p>
-          <div className="flex items-center gap-1 mt-1">
-            <MapPin className="w-3 h-3 text-muted-light" />
-            <span className="text-[11px] text-muted-light">{offer.location}</span>
+          {offer.company_name && (
+            <p className="text-xs text-muted font-medium">{offer.company_name}</p>
+          )}
+          <div className="flex items-center gap-2 mt-1">
+            {offer.city && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-muted-light" />
+                <span className="text-[11px] text-muted-light">{offer.city}</span>
+              </span>
+            )}
+            {offer.salary_display && (
+              <span className="text-[11px] text-muted-light">{offer.salary_display}</span>
+            )}
           </div>
-          <div className="flex flex-wrap gap-1 mt-2">
-            {offer.tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-[10px] font-normal px-1.5 py-0"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
+          {offer.required_skills.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {offer.required_skills.slice(0, 4).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="text-[10px] font-normal px-1.5 py-0"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {offer.required_skills.length > 4 && (
+                <Badge variant="secondary" className="text-[10px] font-normal px-1.5 py-0 text-muted">
+                  +{offer.required_skills.length - 4}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
