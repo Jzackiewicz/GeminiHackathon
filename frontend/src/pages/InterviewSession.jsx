@@ -128,8 +128,16 @@ export default function InterviewSession() {
     setSpeaking(false);
     setStatus("active");
 
-    // Initialize text chat if no messages yet
-    if (chatHistoryRef.current.length === 0 && messages.length === 0) {
+    // Carry over voice transcript into text chat history so the LLM has full context
+    if (chatHistoryRef.current.length === 0 && transcriptRef.current.length > 0) {
+      chatHistoryRef.current = transcriptRef.current.map((entry) => ({
+        role: entry.role === "assistant" ? "assistant" : "user",
+        content: entry.text,
+      }));
+    }
+
+    // If no conversation at all, bootstrap with a greeting
+    if (chatHistoryRef.current.length === 0) {
       chatHistoryRef.current = [{ role: "user", content: "hello" }];
       try {
         const resp = await api.interviewChat(interview.id, chatHistoryRef.current);

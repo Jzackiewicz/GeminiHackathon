@@ -39,7 +39,7 @@ export default function InterviewSummary() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { interviewId, transcript } = location.state || {};
+  const { interviewId, transcript: navTranscript } = location.state || {};
 
   useEffect(() => {
     api.me().then(setUser).catch(() => {
@@ -49,14 +49,31 @@ export default function InterviewSummary() {
   }, [navigate]);
 
   useEffect(() => {
-    if (!interviewId || !transcript || transcript.length < 2) {
+    if (!interviewId) {
       setError("No interview data available.");
       setLoading(false);
       return;
     }
 
-    async function fetchReview() {
+    async function loadReview() {
       try {
+        // Fetch interview from backend — it has the saved transcript and possibly an existing review
+        const interview = await api.getInterview(interviewId);
+
+        if (interview.review) {
+          setReview(interview.review);
+          setLoading(false);
+          return;
+        }
+
+        // Use transcript from navigation state or the one saved in the DB
+        const transcript = navTranscript?.length ? navTranscript : interview.transcript;
+        if (!transcript || transcript.length === 0) {
+          setError("No transcript recorded for this interview.");
+          setLoading(false);
+          return;
+        }
+
         const resp = await api.interviewReview(interviewId, transcript);
         if (resp.error) {
           setError(resp.error);
@@ -70,8 +87,8 @@ export default function InterviewSummary() {
       }
     }
 
-    fetchReview();
-  }, [interviewId, transcript]);
+    loadReview();
+  }, [interviewId]);
 
   function logout() {
     clearToken();
