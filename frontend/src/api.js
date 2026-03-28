@@ -46,6 +46,8 @@ export const api = {
     request("/interviews", { method: "POST", body: JSON.stringify(data) }),
   listInterviews: () => request("/interviews"),
   getInterview: (id) => request(`/interviews/${id}`),
+  updateInterviewReview: (id, review, score) =>
+    request(`/interviews/${id}/review`, { method: "PATCH", body: JSON.stringify({ review, score }) }),
   debugScrape: (username) => request(`/debug/scrape/${encodeURIComponent(username)}`),
   debugAnalyze: (githubData) =>
     request("/debug/analyze", { method: "POST", body: JSON.stringify(githubData) }),

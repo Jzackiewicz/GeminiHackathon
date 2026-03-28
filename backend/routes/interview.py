@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from db import get_db
 from dependencies import get_current_user
+from pydantic import BaseModel
 from models import InterviewSave, InterviewOut
+
+
+class InterviewUpdateReview(BaseModel):
+    review: dict
+    score: int | None = None
 
 router = APIRouter(prefix="/api/interviews")
 
@@ -75,6 +81,33 @@ def get_interview(interview_id: int, user_id: int = Depends(get_current_user)):
     db.close()
     if not r:
         raise HTTPException(404)
+    return InterviewOut(
+        id=r["id"],
+        mode=r["mode"],
+        job_title=r["job_title"],
+        company=r["company"],
+        requirements=r["requirements"],
+        transcript=json.loads(r["transcript"]) if r["transcript"] else [],
+        review=json.loads(r["review"]) if r["review"] else None,
+        score=r["score"],
+        created_at=r["created_at"],
+    )
+
+
+@router.patch("/{interview_id}/review", response_model=InterviewOut)
+def update_interview_review(interview_id: int, body: InterviewUpdateReview, user_id: int = Depends(get_current_user)):
+    db = get_db()
+    r = db.execute("SELECT * FROM interviews WHERE id = ? AND user_id = ?", (interview_id, user_id)).fetchone()
+    if not r:
+        db.close()
+        raise HTTPException(404)
+    db.execute(
+        "UPDATE interviews SET review = ?, score = ? WHERE id = ?",
+        (json.dumps(body.review), body.score or body.review.get("overall_score"), interview_id),
+    )
+    db.commit()
+    r = db.execute("SELECT * FROM interviews WHERE id = ?", (interview_id,)).fetchone()
+    db.close()
     return InterviewOut(
         id=r["id"],
         mode=r["mode"],

@@ -14,8 +14,8 @@ from pathlib import Path
 log = logging.getLogger("stitch")
 
 SCRIPT_PATH = Path(__file__).resolve().parent.parent / "stitch_generate.mjs"
-# node_modules lives at repo root (one level above backend/)
-NODE_MODULES = Path(__file__).resolve().parent.parent.parent / "node_modules"
+# node_modules lives in backend/
+NODE_MODULES = Path(__file__).resolve().parent.parent / "node_modules"
 
 # In-memory job store: job_id -> {status, result, error}
 _jobs: dict[str, dict] = {}

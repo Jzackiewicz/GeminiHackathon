@@ -400,6 +400,7 @@ function InterviewHistory() {
   const [interviews, setInterviews] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [reviewing, setReviewing] = useState(null); // interview id being reviewed
 
   useEffect(() => {
     loadInterviews();
@@ -414,6 +415,26 @@ function InterviewHistory() {
       // not logged in or no interviews
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function reviewSaved(iv) {
+    setReviewing(iv.id);
+    try {
+      const resp = await api.debugVapiReview({
+        transcript: iv.transcript,
+        job_title: iv.job_title || "",
+        company: iv.company || "",
+        requirements: iv.requirements || "",
+      });
+      if (resp.error) return;
+      await api.updateInterviewReview(iv.id, resp.review, resp.review.overall_score);
+      await loadInterviews();
+      setExpanded(iv.id);
+    } catch {
+      // ignore
+    } finally {
+      setReviewing(null);
     }
   }
 
@@ -449,6 +470,9 @@ function InterviewHistory() {
                     "bg-red-500/20 text-red-400"
                   }`}>{iv.score}/10</span>
                 )}
+                {!iv.review && (
+                  <span className="px-2 py-0.5 rounded text-xs bg-gray-700 text-gray-400">No review</span>
+                )}
                 <span className="text-xs text-gray-500">{iv.created_at?.slice(0, 16)}</span>
                 <span className="text-gray-400">{expanded === iv.id ? "▼" : "▶"}</span>
               </div>
@@ -465,6 +489,17 @@ function InterviewHistory() {
                     </div>
                   ))}
                 </div>
+
+                {/* Review button if no review yet */}
+                {!iv.review && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); reviewSaved(iv); }}
+                    disabled={reviewing === iv.id}
+                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-medium transition disabled:opacity-50"
+                  >
+                    {reviewing === iv.id ? "Analyzing with Gemini..." : "Review this Interview"}
+                  </button>
+                )}
 
                 {/* Review summary if available */}
                 {iv.review && (
@@ -486,11 +521,56 @@ function InterviewHistory() {
                     </div>
                     <p className="text-xs text-gray-300">{iv.review.overall_assessment}</p>
 
+                    {iv.review.strengths?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-green-400 font-medium mb-1">Strengths</p>
+                        {iv.review.strengths.map((s, i) => (
+                          <div key={i} className="text-xs text-gray-400">- <span className="text-green-300">{s.area}</span>: {s.detail}</div>
+                        ))}
+                      </div>
+                    )}
+
+                    {iv.review.weaknesses?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-red-400 font-medium mb-1">Areas for Improvement</p>
+                        {iv.review.weaknesses.map((w, i) => (
+                          <div key={i} className="text-xs text-gray-400">- <span className="text-red-300">{w.area}</span>: {w.detail}</div>
+                        ))}
+                      </div>
+                    )}
+
+                    {iv.review.missed_opportunities?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-yellow-400 font-medium mb-1">Missed Opportunities</p>
+                        {iv.review.missed_opportunities.map((m, i) => (
+                          <div key={i} className="text-xs text-gray-400 mb-1">
+                            - <span className="text-yellow-300">{m.topic}</span>: {m.suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {iv.review.recommendations?.length > 0 && (
                       <div>
-                        <p className="text-xs text-blue-400 font-medium mb-1">Key Recommendations</p>
-                        {iv.review.recommendations.slice(0, 3).map((r, i) => (
-                          <p key={i} className="text-xs text-gray-400">- {r.topic}: {r.action}</p>
+                        <p className="text-xs text-blue-400 font-medium mb-1">Recommendations</p>
+                        {iv.review.recommendations.map((r, i) => (
+                          <div key={i} className="text-xs text-gray-400">- <span className="text-blue-300">{r.topic}</span>: {r.action}</div>
+                        ))}
+                      </div>
+                    )}
+
+                    {iv.review.question_scores?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">Question Breakdown</p>
+                        {iv.review.question_scores.map((q, i) => (
+                          <div key={i} className="text-xs flex items-start gap-2 mb-1">
+                            <span className={`px-1 py-0.5 rounded font-bold shrink-0 ${
+                              q.score >= 7 ? "bg-green-500/20 text-green-400" :
+                              q.score >= 4 ? "bg-yellow-500/20 text-yellow-400" :
+                              "bg-red-500/20 text-red-400"
+                            }`}>{q.score}/10</span>
+                            <span className="text-gray-400"><span className="text-gray-300">{q.question}</span> — {q.feedback}</span>
+                          </div>
                         ))}
                       </div>
                     )}
