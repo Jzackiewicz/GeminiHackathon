@@ -1,7 +1,8 @@
 import sqlite3
+import os
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "interview_ai.db"
+DB_PATH = Path(os.getenv("DB_PATH", Path(__file__).parent / "interview_ai.db"))
 
 
 def get_db() -> sqlite3.Connection:
