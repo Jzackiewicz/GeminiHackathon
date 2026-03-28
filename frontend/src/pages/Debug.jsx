@@ -32,9 +32,16 @@ export default function Debug() {
   const [logsOpen, setLogsOpen] = useState(true);
   const logsContainerRef = useRef(null);
 
+  // Load persisted data on mount
   useEffect(() => {
     api.getProfile()
       .then((p) => { if (p.github_username) setUsername(p.github_username); })
+      .catch(() => {});
+    api.getGithubRaw()
+      .then((r) => { if (r.github_data) setResult((prev) => ({ ...prev, github_data: r.github_data })); })
+      .catch(() => {});
+    api.getAnalysis()
+      .then((r) => { if (r.analysis) setAnalysis(r.analysis); })
       .catch(() => {});
   }, []);
 
@@ -67,6 +74,8 @@ export default function Debug() {
         setError(data.error);
       } else {
         setAnalysis(data.analysis);
+        // Persist to DB
+        api.saveDebugData(null, data.analysis).catch(() => {});
       }
     } catch (err) {
       setError(err.message);
@@ -85,6 +94,8 @@ export default function Debug() {
     try {
       const data = await api.debugScrape(username.trim());
       setResult(data);
+      // Persist to DB
+      api.saveDebugData(data.github_data, null).catch(() => {});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -309,6 +320,15 @@ export default function Debug() {
               {analysis && (
                 <CollapsibleSection title="Gemini Analysis Result" defaultOpen>
                   <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <button
+                        onClick={runAnalysis}
+                        disabled={analyzing}
+                        className="text-xs text-gray-500 hover:text-gray-300 transition disabled:opacity-50"
+                      >
+                        {analyzing ? "Regenerating..." : "Regenerate"}
+                      </button>
+                    </div>
                     <div className="p-3 bg-gray-800 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs">{analysis.experience_level}</span>
@@ -872,6 +892,8 @@ function VapiDebug({ analysis, githubData }) {
   const [requirements, setRequirements] = useState("Python, FastAPI, PostgreSQL");
   const [difficulty, setDifficulty] = useState("medium");
   const [interviewType, setInterviewType] = useState("technical");
+  const [autoConfiguring, setAutoConfiguring] = useState(false);
+  const [configRationale, setConfigRationale] = useState("");
   const [autoFilled, setAutoFilled] = useState(false);
   const [mockJobs, setMockJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState(null);
@@ -903,6 +925,25 @@ function VapiDebug({ analysis, githubData }) {
     setJobTitle(job.title);
     setCompany(job.company);
     setRequirements(job.requirements);
+  }
+
+  async function autoConfigureInterview() {
+    setAutoConfiguring(true);
+    setConfigRationale("");
+    try {
+      let ivData;
+      try { ivData = await api.listInterviews(); } catch { ivData = []; }
+      const resp = await api.debugAutoConfigInterview({
+        github_data: githubData || null,
+        profile_analysis: analysis || null,
+        interviews: ivData,
+      });
+      if (resp.error) return;
+      const c = resp.config;
+      if (c.difficulty) setDifficulty(c.difficulty);
+      if (c.rationale) setConfigRationale(c.rationale);
+    } catch {}
+    setAutoConfiguring(false);
   }
 
   const [assistantId, setAssistantId] = useState(null);
@@ -1202,6 +1243,20 @@ function VapiDebug({ analysis, githubData }) {
             )}
           </div>
 
+          {mode === "interview" && (
+            <button
+              onClick={autoConfigureInterview}
+              disabled={autoConfiguring}
+              className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition disabled:opacity-50"
+            >
+              {autoConfiguring ? "Configuring with Gemini..." : "Auto-Configure"}
+            </button>
+          )}
+
+          {configRationale && (
+            <p className="text-xs text-purple-300 bg-purple-500/10 rounded-lg px-3 py-2 italic">{configRationale}</p>
+          )}
+
           <div className="flex gap-2">
             <button onClick={startTextChat} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">
               Text Chat
@@ -1477,6 +1532,13 @@ function CareerAdvisor({ analysis, githubData }) {
   const [suggestions, setSuggestions] = useState(null);
   const [error, setError] = useState("");
   const [interviews, setInterviews] = useState(null);
+
+  // Load persisted suggestions
+  useEffect(() => {
+    api.getCareerSuggestions()
+      .then((r) => { if (r.suggestions) setSuggestions(r.suggestions); })
+      .catch(() => {});
+  }, []);
 
   async function generate() {
     setLoading(true);

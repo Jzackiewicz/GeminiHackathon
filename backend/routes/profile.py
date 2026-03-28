@@ -6,9 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 
 from db import get_db
 from dependencies import get_current_user
+from pydantic import BaseModel
 from models import ProfileOut, TechnologyDetail, NotableProject, GitHubConnect
 from services.scraper import fetch_github_profile, deep_scrape_github
 from services.llm import analyze_github_profile
+from services.prompts import get_prompt
 
 router = APIRouter(prefix="/api/profile")
 
@@ -126,3 +128,109 @@ async def connect_github(
         summary=summary,
         analysis_ready=False,
     )
+
+
+@router.get("/career-suggestions")
+def get_career_suggestions(user_id: int = Depends(get_current_user)):
+    """Get stored career suggestions."""
+    db = get_db()
+    row = db.execute("SELECT career_suggestions FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
+    db.close()
+    if not row or not row["career_suggestions"]:
+        return {"suggestions": None}
+    return {"suggestions": json.loads(row["career_suggestions"])}
+
+
+@router.get("/github-raw")
+def get_github_raw(user_id: int = Depends(get_current_user)):
+    """Get the stored raw GitHub scrape data."""
+    db = get_db()
+    row = db.execute("SELECT github_raw FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
+    db.close()
+    if not row or not row["github_raw"]:
+        return {"github_data": None}
+    return {"github_data": json.loads(row["github_raw"])}
+
+
+@router.get("/analysis")
+def get_analysis(user_id: int = Depends(get_current_user)):
+    """Get the stored Gemini profile analysis."""
+    db = get_db()
+    row = db.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
+    db.close()
+    if not row or not row["experience_level"]:
+        return {"analysis": None}
+    return {
+        "analysis": {
+            "summary": row["summary"],
+            "experience_level": row["experience_level"],
+            "primary_role": row["primary_role"],
+            "technologies": json.loads(row["technologies"]) if row["technologies"] else [],
+            "strengths": json.loads(row["strengths"]) if row["strengths"] else [],
+            "interests": json.loads(row["interests"]) if row["interests"] else [],
+            "notable_projects": json.loads(row["notable_projects"]) if row["notable_projects"] else [],
+        },
+    }
+
+
+class SaveDebugData(BaseModel):
+    github_data: dict | None = None
+    analysis: dict | None = None
+
+
+@router.post("/save-debug")
+def save_debug_data(body: SaveDebugData, user_id: int = Depends(get_current_user)):
+    """Save scrape and/or analysis data from the debug page to the user's profile."""
+    db = get_db()
+    if body.github_data:
+        username = body.github_data.get("username") or body.github_data.get("name")
+        db.execute(
+            "UPDATE profiles SET github_raw = ?, github_username = COALESCE(github_username, ?), updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+            (json.dumps(body.github_data, default=str), username, user_id),
+        )
+    if body.analysis:
+        a = body.analysis
+        db.execute(
+            """UPDATE profiles SET
+                technologies = ?, summary = ?, experience_level = ?, primary_role = ?,
+                strengths = ?, interests = ?, notable_projects = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?""",
+            (
+                json.dumps(a.get("technologies", [])),
+                a.get("summary", ""),
+                a.get("experience_level"),
+                a.get("primary_role"),
+                json.dumps(a.get("strengths", [])),
+                json.dumps(a.get("interests", [])),
+                json.dumps(a.get("notable_projects", [])),
+                user_id,
+            ),
+        )
+    db.commit()
+    db.close()
+    return {"ok": True}
+
+
+@router.post("/rescan")
+async def rescan_profile(
+    background_tasks: BackgroundTasks,
+    user_id: int = Depends(get_current_user),
+):
+    """Re-trigger deep scrape + Gemini analysis for the current user."""
+    db = get_db()
+    row = db.execute("SELECT github_username FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
+    db.close()
+    if not row or not row["github_username"]:
+        raise HTTPException(400, "No GitHub username connected")
+
+    # Clear existing analysis to signal it's regenerating
+    db = get_db()
+    db.execute(
+        "UPDATE profiles SET experience_level = NULL, primary_role = NULL, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+        (user_id,),
+    )
+    db.commit()
+    db.close()
+
+    background_tasks.add_task(_run_deep_analysis, user_id, row["github_username"])
+    return {"status": "rescan_started"}

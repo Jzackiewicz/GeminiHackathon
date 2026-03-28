@@ -266,6 +266,34 @@ cv_generation:
     - All content in a single centered column, max-width ~800px
     - Print-friendly: no background colors that waste ink, good contrast
 
+interview_configurator:
+  system: |
+    You are an expert interview coach. Based on a developer's profile and history,
+    you configure the optimal mock interview settings.
+    You must respond with valid JSON only — no markdown, no commentary.
+
+  user: |
+    Based on this developer's profile, configure the ideal mock interview settings.
+
+    {profile_section}
+
+    {interviews_section}
+
+    Return a JSON object with exactly these fields:
+
+    {{
+      "difficulty": "easy | medium | hard | faang",
+      "rationale": "2-3 sentences explaining why you chose this difficulty"
+    }}
+
+    Guidelines:
+    - If they have past interviews with low scores, suggest easier difficulty
+    - If they aced past interviews, increase difficulty
+    - If no interview history, base difficulty on their experience level
+    - junior → easy or medium
+    - mid → medium or hard
+    - senior/lead → hard or faang
+
 career_advisor:
   system: |
     You are a senior career advisor and tech industry mentor.

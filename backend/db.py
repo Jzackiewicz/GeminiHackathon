@@ -68,9 +68,14 @@ def init_db():
 
     # Migrations: add columns that may be missing from older DBs
     cursor = conn.execute("PRAGMA table_info(users)")
-    existing = {row[1] for row in cursor.fetchall()}
-    if "github_token" not in existing:
+    user_cols = {row[1] for row in cursor.fetchall()}
+    if "github_token" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN github_token TEXT")
+
+    cursor = conn.execute("PRAGMA table_info(profiles)")
+    profile_cols = {row[1] for row in cursor.fetchall()}
+    if "career_suggestions" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN career_suggestions TEXT")
 
     conn.commit()
     conn.close()

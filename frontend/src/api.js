@@ -37,6 +37,12 @@ export const api = {
   getProfile: () => request("/profile"),
   connectGithub: (username) =>
     request("/profile/github", { method: "POST", body: JSON.stringify({ username }) }),
+  getGithubRaw: () => request("/profile/github-raw"),
+  getAnalysis: () => request("/profile/analysis"),
+  rescanProfile: () => request("/profile/rescan", { method: "POST" }),
+  saveDebugData: (github_data, analysis) =>
+    request("/profile/save-debug", { method: "POST", body: JSON.stringify({ github_data, analysis }) }),
+  getCareerSuggestions: () => request("/profile/career-suggestions"),
   searchJobs: (keywords = [], remote = true) =>
     request("/jobs/search", { method: "POST", body: JSON.stringify({ keywords, remote }) }),
   listJobs: () => request("/jobs"),
@@ -68,6 +74,8 @@ export const api = {
   debugCareerAdvise: (params) =>
     request("/debug/career/advise", { method: "POST", body: JSON.stringify(params) }),
   debugMockJobs: () => request("/debug/jobs/mock"),
+  debugAutoConfigInterview: (params) =>
+    request("/debug/vapi/auto-configure", { method: "POST", body: JSON.stringify(params) }),
   debugCacheStats: () => request("/debug/cache/stats"),
   debugCacheClear: () => request("/debug/cache", { method: "DELETE" }),
   debugCVToPdf: async (html) => {

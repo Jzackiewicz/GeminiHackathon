@@ -349,6 +349,74 @@ def cv_preview_prompt(body: CVGenerateRequest):
         return {"error": str(e)}
 
 
+class InterviewConfigRequest(BaseModel):
+    github_data: dict | None = None
+    profile_analysis: dict | None = None
+    interviews: list[dict] | None = None
+
+
+@router.post("/vapi/auto-configure")
+@cached
+def auto_configure_interview(body: InterviewConfigRequest):
+    """Use Gemini to suggest optimal interview settings based on profile."""
+    # Build profile section
+    profile_parts = []
+    if body.profile_analysis:
+        a = body.profile_analysis
+        profile_parts.append(f"Summary: {a.get('summary', '')}")
+        profile_parts.append(f"Experience Level: {a.get('experience_level', '')}")
+        profile_parts.append(f"Primary Role: {a.get('primary_role', '')}")
+        techs = [f"{t.get('name')} ({t.get('proficiency')})" for t in a.get('technologies', [])]
+        if techs:
+            profile_parts.append(f"Technologies: {', '.join(techs)}")
+        strengths = a.get('strengths', [])
+        if strengths:
+            profile_parts.append(f"Strengths: {', '.join(strengths)}")
+
+    if body.github_data:
+        gh = body.github_data
+        langs = gh.get('languages', {})
+        if langs:
+            top = [f"{l} ({d.get('percent', 0)}%)" for l, d in list(langs.items())[:10]]
+            profile_parts.append(f"GitHub Languages: {', '.join(top)}")
+
+    profile_section = "\n".join(profile_parts) if profile_parts else "No profile data available."
+
+    # Build interviews section
+    interviews_parts = []
+    if body.interviews:
+        for iv in body.interviews:
+            review = iv.get('review')
+            if not review:
+                continue
+            interviews_parts.append(f"Interview for {iv.get('job_title', 'Unknown')} — Score: {review.get('overall_score', '?')}/10, Recommendation: {review.get('hiring_recommendation', '?')}")
+            for w in review.get('weaknesses', []):
+                interviews_parts.append(f"  Weakness: {w.get('area')}")
+            for r in review.get('recommendations', []):
+                interviews_parts.append(f"  Recommendation: {r.get('topic')}")
+
+    interviews_section = "\n".join(interviews_parts) if interviews_parts else "No interview history."
+
+    system = get_prompt("interview_configurator", "system")
+    user_prompt = get_prompt(
+        "interview_configurator", "user",
+        profile_section=profile_section,
+        interviews_section=interviews_section,
+    )
+
+    try:
+        raw = prompt_with_context("", user_prompt, system=system)
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        config = json.loads(cleaned.strip())
+        return {"config": config}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 class CareerAdvisorRequest(BaseModel):
     github_data: dict | None = None
     profile_analysis: dict | None = None
@@ -356,8 +424,7 @@ class CareerAdvisorRequest(BaseModel):
 
 
 @router.post("/career/advise")
-@cached
-def career_advise(body: CareerAdvisorRequest):
+def career_advise(body: CareerAdvisorRequest, authorization: str = Header(None)):
     """Generate career suggestions from full profile context."""
     # Build profile section
     profile_parts = []
@@ -432,6 +499,20 @@ def career_advise(body: CareerAdvisorRequest):
         if cleaned.endswith("```"):
             cleaned = cleaned.rsplit("```", 1)[0]
         suggestions = json.loads(cleaned.strip())
+
+        # Persist to DB if authenticated
+        if authorization and authorization.startswith("Bearer "):
+            from services.auth import decode_token
+            user_id = decode_token(authorization.removeprefix("Bearer ").strip())
+            if user_id:
+                db = get_db()
+                db.execute(
+                    "UPDATE profiles SET career_suggestions = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+                    (json.dumps(suggestions), user_id),
+                )
+                db.commit()
+                db.close()
+
         return {"suggestions": suggestions}
     except Exception as e:
         return {"error": str(e)}
