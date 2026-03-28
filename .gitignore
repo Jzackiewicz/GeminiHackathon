@@ -1,6 +1,11 @@
 # Node
 node_modules/
+package-lock.json
 tests/output/
+
+# IDE / tools
+pyrightconfig.json
+.claude/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
