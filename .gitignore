@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Node
+node_modules/
+frontend/dist/
+package-lock.json
+
+# SQLite (local dev DBs)
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
