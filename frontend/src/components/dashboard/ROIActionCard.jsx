@@ -32,16 +32,16 @@ export default function ROIActionCard({ action }) {
   const Icon = iconMap[action.icon] || BookOpen;
 
   return (
-    <Card className="w-[280px] border-panel-border shadow-card hover:shadow-card-hover transition-shadow duration-200 cursor-pointer group">
+    <Card className="border-panel-border shadow-card">
       <CardContent className="p-5 space-y-3">
         <div className="flex items-start justify-between">
-          <div className="w-10 h-10 rounded-xl bg-accent-light flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
-            <Icon className="w-5 h-5 text-accent group-hover:text-white transition-colors" />
+          <div className="w-10 h-10 rounded-xl bg-accent-light flex items-center justify-center transition-all">
+            <Icon className="w-5 h-5 text-accent group-hover:text-accent-dark transition-colors" />
           </div>
           <div className="flex gap-1.5">
             <Badge
               variant="secondary"
-              className="text-[10px] font-medium bg-background border-panel-border"
+              className="text-[10px] font-medium"
             >
               {typeLabels[action.type]}
             </Badge>
