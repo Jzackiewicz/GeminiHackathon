@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import GitHubCallback from "./pages/GitHubCallback";
 import Dashboard from "./pages/Dashboard";
+import Interview from "./pages/Interview";
 import Debug from "./pages/Debug";
 
 function PrivateRoute({ children }) {
@@ -15,6 +16,14 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/github/callback" element={<GitHubCallback />} />
       <Route path="/debug" element={<Debug />} />
+      <Route
+        path="/interview"
+        element={
+          <PrivateRoute>
+            <Interview />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/*"
         element={
