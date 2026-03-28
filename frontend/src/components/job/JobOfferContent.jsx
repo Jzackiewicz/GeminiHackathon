@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 function Section({ title, children }) {
   return (
     <div>
-      <h3 className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+      <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">
         {title}
       </h3>
       {children}
@@ -19,17 +19,17 @@ export default function JobOfferContent({ offer }) {
   const tags = offer.tags || [];
 
   return (
-    <Card className="border-panel-border shadow-card h-full flex flex-col">
-      <CardContent className="p-5 flex-1 overflow-y-auto custom-scrollbar space-y-5">
+    <Card>
+      <CardContent className="p-6 space-y-6">
         {/* Header */}
         <div>
           <div className="flex items-start justify-between gap-3 mb-3">
-            <div>
-              <h1 className="text-lg font-semibold text-[#1A1A1A]">{offer.title}</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-extrabold text-on-surface font-headline tracking-tight break-words leading-tight">{offer.title}</h1>
               {offer.company && (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Building2 className="w-3.5 h-3.5 text-muted" />
-                  <span className="text-sm text-muted">{offer.company}</span>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-on-surface-variant shrink-0" />
+                  <span className="text-sm text-on-surface-variant">{offer.company}</span>
                 </div>
               )}
             </div>
@@ -38,7 +38,7 @@ export default function JobOfferContent({ offer }) {
                 href={offer.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                className="shrink-0 inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline mt-1"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 View listing
@@ -46,22 +46,22 @@ export default function JobOfferContent({ offer }) {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
             {offer.location && (
               <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
                 {offer.location}
               </span>
             )}
             {offer.salary && (
               <span className="flex items-center gap-1">
-                <DollarSign className="w-3.5 h-3.5" />
+                <DollarSign className="w-3.5 h-3.5 shrink-0" />
                 {offer.salary}
               </span>
             )}
             {offer.postedDate && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
                 Posted {new Date(offer.postedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </span>
             )}
@@ -82,7 +82,7 @@ export default function JobOfferContent({ offer }) {
         {offer.bodyHtml && (
           <Section title="About the Role">
             <div
-              className="text-sm text-[#1A1A1A] leading-relaxed prose prose-sm max-w-none"
+              className="text-sm text-on-surface leading-relaxed prose prose-sm max-w-none break-words overflow-hidden [&_img]:max-w-full [&_pre]:overflow-x-auto [&_table]:w-full [&_table]:overflow-x-auto [&_a]:break-all"
               dangerouslySetInnerHTML={{ __html: offer.bodyHtml }}
             />
           </Section>
@@ -91,7 +91,7 @@ export default function JobOfferContent({ offer }) {
         {/* Plain text description fallback */}
         {!offer.bodyHtml && offer.description && (
           <Section title="About the Role">
-            <p className="text-sm text-[#1A1A1A] leading-relaxed">{offer.description}</p>
+            <p className="text-sm text-on-surface leading-relaxed">{offer.description}</p>
           </Section>
         )}
 
@@ -102,7 +102,7 @@ export default function JobOfferContent({ offer }) {
               {offer.requirements.map((req, i) => (
                 <li
                   key={i}
-                  className="text-sm text-[#1A1A1A] leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#D1D5DB]"
+                  className="text-sm text-on-surface leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-outline-variant"
                 >
                   {req}
                 </li>
@@ -118,7 +118,7 @@ export default function JobOfferContent({ offer }) {
               {offer.responsibilities.map((resp, i) => (
                 <li
                   key={i}
-                  className="text-sm text-[#1A1A1A] leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#D1D5DB]"
+                  className="text-sm text-on-surface leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-outline-variant"
                 >
                   {resp}
                 </li>
@@ -134,7 +134,7 @@ export default function JobOfferContent({ offer }) {
               {offer.benefits.map((ben, i) => (
                 <li
                   key={i}
-                  className="text-sm text-[#1A1A1A] leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-success"
+                  className="text-sm text-on-surface leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-tertiary-fixed-dim"
                 >
                   {ben}
                 </li>

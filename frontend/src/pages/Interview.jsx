@@ -42,22 +42,19 @@ export default function Interview() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-surface">
       <TopBar user={user} onLogout={logout} />
 
       {/* Two-column layout — each column manages its own vertical split */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-y-auto lg:overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 px-4 pb-4 lg:px-6 lg:pb-6 pt-20 overflow-y-auto lg:overflow-hidden bg-surface-container-low">
         {/* Left column: ~40% width */}
         <div className="w-full lg:w-[40%] shrink-0 flex flex-col gap-4 min-h-0">
-          {/* Job Offer (left) + Tips (right) side by side */}
-          <Card className="border-panel-border shadow-card shrink-0">
-            <CardContent className="p-5 flex gap-5">
-              <div className="flex-1 min-w-0">
-                <JobOfferSummary offer={selectedJob} />
-              </div>
-              <div className="border-l border-panel-border pl-5 flex-1 min-w-0">
-                <PreInterviewTips tips={mockPreInterviewTips} />
-              </div>
+          {/* Job Offer + Tips stacked */}
+          <Card className="shrink-0">
+            <CardContent className="p-5 space-y-4">
+              <JobOfferSummary offer={selectedJob} />
+              <div className="h-px bg-surface-container-high" />
+              <PreInterviewTips tips={mockPreInterviewTips} />
             </CardContent>
           </Card>
 

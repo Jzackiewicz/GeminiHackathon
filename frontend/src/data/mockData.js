@@ -369,8 +369,8 @@ export const mockApplicationStatus = {
 };
 
 export const applicationStatuses = {
-  applied: { label: "Applied", color: "bg-accent-light text-accent" },
+  applied: { label: "Applied", color: "bg-secondary-container text-on-secondary-container" },
   interview: { label: "Interview", color: "bg-warning-light text-amber-700" },
-  offer: { label: "Offer", color: "bg-success-light text-emerald-700" },
-  rejected: { label: "Rejected", color: "bg-danger-light text-red-700" },
+  offer: { label: "Offer", color: "bg-tertiary-fixed-dim/20 text-on-tertiary-container" },
+  rejected: { label: "Rejected", color: "bg-error-container text-on-error-container" },
 };

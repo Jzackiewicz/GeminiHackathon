@@ -11,8 +11,8 @@ function ChatBubble({ message }) {
       <div
         className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
           isAi
-            ? "bg-white border border-panel-border text-[#1A1A1A] rounded-tl-md"
-            : "bg-[#1A1A1A] text-white rounded-tr-md"
+            ? "bg-surface-container-lowest text-on-surface rounded-tl-none shadow-card"
+            : "bg-primary-container text-on-primary rounded-tr-none"
         }`}
       >
         {message.text}
@@ -255,27 +255,27 @@ export default function InterviewSession() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-surface">
       <TopBar user={user} onLogout={logout} />
 
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col pt-16 bg-surface-container-low">
         {/* Session header */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-panel-border shrink-0">
+        <div className="flex items-center justify-between px-6 py-3 bg-surface-container-lowest shadow-card shrink-0">
           <div>
-            <h2 className="text-sm font-semibold text-[#1A1A1A]">Interview Session</h2>
+            <h2 className="text-base font-extrabold text-on-surface font-headline tracking-tight">Interview Session</h2>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className={`w-2 h-2 rounded-full ${
-                status === "active" ? "bg-emerald-500" :
-                status === "connecting" || status === "loading" ? "bg-amber-500 animate-pulse" :
-                ended ? "bg-gray-400" : "bg-red-500"
+                status === "active" ? "bg-tertiary-fixed-dim" :
+                status === "connecting" || status === "loading" ? "bg-warning animate-pulse" :
+                ended ? "bg-outline" : "bg-error"
               }`} />
-              <span className="text-[11px] text-muted">
-                {interview ? `ID: #${interview.id}` : ""}
-                {status === "loading" && " – Starting..."}
-                {status === "connecting" && " – Connecting voice..."}
-                {status === "active" && (voiceActive ? " – Voice active" : " – Text chat")}
-                {status === "error" && " – Error"}
-                {ended && " – Ended"}
+              <span className="text-[11px] text-on-surface-variant font-medium">
+                {interview ? `#${interview.id}` : ""}
+                {status === "loading" && " — Starting..."}
+                {status === "connecting" && " — Connecting voice..."}
+                {status === "active" && (voiceActive ? " — Voice active" : " — Text chat")}
+                {status === "error" && " — Error"}
+                {ended && " — Ended"}
               </span>
             </div>
           </div>
@@ -283,14 +283,14 @@ export default function InterviewSession() {
             <button
               onClick={handleEndInterview}
               disabled={status === "loading"}
-              className="px-4 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 bg-error text-on-error text-xs font-bold rounded-full hover:bg-red-700 transition-all cursor-pointer disabled:opacity-50 hover:shadow-card"
             >
               End Interview
             </button>
           ) : (
             <button
               onClick={() => navigate("/interview")}
-              className="px-4 py-1.5 bg-[#1A1A1A] text-white text-xs font-medium rounded-lg hover:bg-[#2A2A2A] transition-colors cursor-pointer"
+              className="px-5 py-2 bg-primary text-on-primary text-xs font-bold rounded-full hover:bg-primary-container transition-all cursor-pointer hover:shadow-card"
             >
               Back to Interview
             </button>
@@ -298,10 +298,13 @@ export default function InterviewSession() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-6 py-6 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-6 py-6 space-y-4 max-w-4xl w-full mx-auto">
           {status === "loading" && messages.length === 0 && (
-            <div className="flex justify-center py-12">
-              <p className="text-sm text-muted">Starting interview...</p>
+            <div className="flex flex-col items-center gap-3 py-16">
+              <div className="w-12 h-12 rounded-full bg-surface-container-lowest shadow-card flex items-center justify-center">
+                <Mic className="w-5 h-5 text-on-surface-variant animate-pulse" />
+              </div>
+              <p className="text-sm text-on-surface-variant font-medium">Starting interview...</p>
             </div>
           )}
           {messages.map((msg) => (
@@ -309,7 +312,9 @@ export default function InterviewSession() {
           ))}
           {error && (
             <div className="flex justify-center">
-              <p className="text-sm text-red-500">{error}</p>
+              <div className="bg-error-container rounded-xl px-4 py-2">
+                <p className="text-sm text-on-error-container">{error}</p>
+              </div>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -321,7 +326,7 @@ export default function InterviewSession() {
             <button
               onClick={handleReview}
               disabled={reviewing}
-              className="w-full max-w-3xl mx-auto block py-3 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+              className="w-full max-w-3xl mx-auto block py-3 bg-primary text-on-primary text-sm font-bold font-headline rounded-full hover:bg-primary-container hover:shadow-ambient transition-all disabled:opacity-50 cursor-pointer"
             >
               {reviewing ? "Analyzing with AI..." : "Review Interview Performance"}
             </button>
@@ -331,23 +336,23 @@ export default function InterviewSession() {
         {/* Review results */}
         {review && (
           <div className="shrink-0 px-6 pb-6 max-w-3xl mx-auto w-full">
-            <div className="border border-purple-200 rounded-xl p-5 bg-purple-50/50 space-y-4">
+            <div className="rounded-2xl p-6 bg-surface-container-lowest shadow-card space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-[#1A1A1A]">Interview Review</h3>
+                <h3 className="text-base font-extrabold text-on-surface font-headline tracking-tight">Interview Review</h3>
                 <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                    review.overall_score >= 7 ? "bg-emerald-100 text-emerald-700" :
-                    review.overall_score >= 4 ? "bg-amber-100 text-amber-700" :
-                    "bg-red-100 text-red-700"
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    review.overall_score >= 7 ? "bg-tertiary-fixed-dim/20 text-on-tertiary-container" :
+                    review.overall_score >= 4 ? "bg-warning-light text-amber-700" :
+                    "bg-error-container text-on-error-container"
                   }`}>
                     {review.overall_score}/10
                   </span>
                   {review.hiring_recommendation && (
-                    <span className={`px-2 py-1 rounded text-[10px] font-medium uppercase ${
-                      review.hiring_recommendation === "strong_hire" ? "bg-emerald-100 text-emerald-700" :
-                      review.hiring_recommendation === "hire" ? "bg-blue-100 text-blue-700" :
-                      review.hiring_recommendation === "maybe" ? "bg-amber-100 text-amber-700" :
-                      "bg-red-100 text-red-700"
+                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                      review.hiring_recommendation === "strong_hire" ? "bg-tertiary-fixed-dim/20 text-on-tertiary-container" :
+                      review.hiring_recommendation === "hire" ? "bg-secondary-container text-on-secondary-container" :
+                      review.hiring_recommendation === "maybe" ? "bg-warning-light text-amber-700" :
+                      "bg-error-container text-on-error-container"
                     }`}>
                       {review.hiring_recommendation.replace("_", " ")}
                     </span>
@@ -355,24 +360,24 @@ export default function InterviewSession() {
                 </div>
               </div>
               {review.overall_assessment && (
-                <p className="text-xs text-[#1A1A1A] leading-relaxed">{review.overall_assessment}</p>
+                <p className="text-sm text-on-surface-variant leading-relaxed">{review.overall_assessment}</p>
               )}
               {review.strengths?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider mb-1">Strengths</p>
+                  <p className="text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider mb-1.5">Strengths</p>
                   {review.strengths.map((s, i) => (
-                    <p key={i} className="text-xs text-[#1A1A1A] pl-3 py-0.5 border-l-2 border-emerald-300">
-                      <span className="font-medium">{s.area}</span> — {s.detail}
+                    <p key={i} className="text-xs text-on-surface pl-3 py-0.5 border-l-2 border-tertiary-fixed-dim">
+                      <span className="font-semibold">{s.area}</span> — {s.detail}
                     </p>
                   ))}
                 </div>
               )}
               {review.weaknesses?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-medium text-red-500 uppercase tracking-wider mb-1">Areas for Improvement</p>
+                  <p className="text-[10px] font-bold text-error uppercase tracking-wider mb-1.5">Areas for Improvement</p>
                   {review.weaknesses.map((w, i) => (
-                    <p key={i} className="text-xs text-[#1A1A1A] pl-3 py-0.5 border-l-2 border-red-300">
-                      <span className="font-medium">{w.area}</span> — {w.detail}
+                    <p key={i} className="text-xs text-on-surface pl-3 py-0.5 border-l-2 border-error">
+                      <span className="font-semibold">{w.area}</span> — {w.detail}
                     </p>
                   ))}
                 </div>
@@ -383,21 +388,21 @@ export default function InterviewSession() {
 
         {/* Voice agent active indicator */}
         {voiceActive && !ended && (
-          <div className="shrink-0 flex flex-col items-center gap-3 py-6">
+          <div className="shrink-0 flex flex-col items-center gap-3 py-8">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-[#1A1A1A] flex items-center justify-center">
-                <Mic className="w-6 h-6 text-white" />
+              <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center shadow-ambient">
+                <Mic className="w-7 h-7 text-on-primary" />
               </div>
               {speaking && (
-                <span className="absolute inset-0 rounded-full bg-[#1A1A1A]/20 animate-ping" />
+                <span className="absolute inset-0 rounded-full bg-tertiary-fixed-dim/20 animate-ping" />
               )}
             </div>
-            <p className="text-xs text-muted">
-              {speaking ? "AI is speaking..." : "Listening... speak now or tap to stop"}
+            <p className="text-sm text-on-surface-variant font-medium">
+              {speaking ? "AI is speaking..." : "Listening... speak now"}
             </p>
             <button
               onClick={handleVoice}
-              className="px-4 py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-full hover:bg-red-50 transition-colors cursor-pointer"
+              className="px-5 py-2 text-xs font-bold text-error bg-error-container rounded-full hover:bg-error/10 transition-colors cursor-pointer"
             >
               <MicOff className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
               Switch to Text
@@ -408,7 +413,7 @@ export default function InterviewSession() {
         {/* Input area */}
         {!ended && status !== "loading" && (
           <div className="shrink-0 px-6 pb-6 pt-2 max-w-3xl w-full mx-auto">
-            <div className="flex items-center gap-2 bg-white border border-panel-border rounded-2xl px-4 py-2 shadow-card focus-within:ring-2 focus-within:ring-[#1A1A1A]/20 focus-within:border-[#1A1A1A] transition">
+            <div className="flex items-center gap-2 bg-surface-container-lowest rounded-2xl px-4 py-2.5 shadow-card focus-within:shadow-card-hover transition-shadow">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -416,13 +421,13 @@ export default function InterviewSession() {
                 placeholder={voiceActive ? "Type to inject into call..." : "Type a message..."}
                 rows={1}
                 disabled={sending}
-                className="flex-1 text-sm bg-transparent border-none outline-none resize-none max-h-32 py-1.5 disabled:opacity-50"
+                className="flex-1 text-sm bg-transparent border-none outline-none resize-none max-h-32 py-1 text-on-surface placeholder:text-outline disabled:opacity-50"
               />
               {hasText ? (
                 <button
                   onClick={handleSend}
                   disabled={sending}
-                  className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-[#1A1A1A] text-white hover:bg-[#2A2A2A] transition-all cursor-pointer disabled:opacity-50"
+                  className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-primary text-on-primary hover:bg-primary-container transition-all cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-4 h-4 -ml-[1px]" />
                 </button>
@@ -432,8 +437,8 @@ export default function InterviewSession() {
                   disabled={!interview}
                   className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all cursor-pointer ${
                     voiceActive
-                      ? "bg-red-500 text-white hover:bg-red-600"
-                      : "text-[#1A1A1A] hover:bg-[#EAEAE5]"
+                      ? "bg-error text-on-error hover:bg-red-700"
+                      : "text-on-surface-variant hover:bg-surface-container-high"
                   }`}
                 >
                   {voiceActive ? (

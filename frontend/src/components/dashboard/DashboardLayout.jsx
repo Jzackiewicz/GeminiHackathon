@@ -1,44 +1,42 @@
-import { Button } from "@/components/ui/button";
 import TopBar from "./TopBar";
 import ProfileSummary from "./ProfileSummary";
 import AddDataSource from "./AddDataSource";
-import JobApplications from "./JobApplications";
 import ROIActions from "./ROIActions";
 import JobOffers from "./JobOffers";
 
 export default function DashboardLayout({ user, profile, onUpdateProfile, onLogout }) {
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-surface">
       <TopBar user={user} onLogout={onLogout} />
 
-      <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* Left + Center content (scrollable) */}
-        <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar p-4 lg:p-6 space-y-5">
-          {/* Top: Profile + ROI side by side */}
-          <div className="flex flex-col lg:flex-row gap-5">
-            <div className="w-full lg:w-[340px] shrink-0 space-y-3">
-              <ProfileSummary profile={profile} onUpdate={onUpdateProfile} />
-              <AddDataSource profile={profile} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <ROIActions />
+      <div className="pt-16">
+        {/* Hero / Profile Section */}
+        <section className="bg-surface-container-low">
+          <div className="max-w-6xl mx-auto px-6 py-12 lg:py-16">
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              <div className="flex-1 min-w-0">
+                <ProfileSummary profile={profile} onUpdate={onUpdateProfile} />
+              </div>
+              <div className="w-full lg:w-auto shrink-0">
+                <AddDataSource profile={profile} />
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Applications */}
-          <JobApplications />
+        {/* AI Suggestions */}
+        <section className="bg-surface">
+          <div className="max-w-6xl mx-auto px-6 py-12 lg:py-16">
+            <ROIActions />
+          </div>
+        </section>
 
-        </div>
-
-        {/* Right: Job Offers (fixed column, own scroll) */}
-        <div className="hidden lg:block w-[300px] shrink-0 border-l border-[#E8E8E3] p-4 lg:p-6 overflow-y-auto custom-scrollbar">
-          <JobOffers />
-        </div>
-      </div>
-
-      {/* Mobile job offers */}
-      <div className="lg:hidden p-4">
-        <JobOffers />
+        {/* Job Matches */}
+        <section className="bg-surface-container-low">
+          <div className="max-w-6xl mx-auto px-6 py-12 lg:py-16">
+            <JobOffers />
+          </div>
+        </section>
       </div>
     </div>
   );

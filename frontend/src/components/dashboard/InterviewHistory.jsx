@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 function ScoreCell({ score }) {
   const color =
     score >= 80
-      ? "text-emerald-600"
+      ? "text-on-tertiary-container"
       : score >= 60
-      ? "text-amber-600"
-      : "text-red-500";
-  return <span className={`text-xs font-semibold ${color}`}>{score}</span>;
+      ? "text-warning"
+      : "text-error";
+  return <span className={`text-xs font-bold ${color}`}>{score}</span>;
 }
 
 function formatDate(dateStr) {
@@ -28,75 +28,65 @@ export default function InterviewHistory({ history }) {
   }
 
   return (
-    <Card className="border-panel-border shadow-card h-full flex flex-col overflow-hidden">
+    <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-2 shrink-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <History className="w-4 h-4 text-muted" />
+          <CardTitle className="text-base font-bold flex items-center gap-2">
+            <History className="w-4 h-4 text-on-surface-variant" />
             Interview History
           </CardTitle>
-          <span className="text-xs text-muted">{history.length} sessions</span>
+          <span className="text-xs text-on-surface-variant font-medium">{history.length} sessions</span>
         </div>
       </CardHeader>
       <CardContent className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-0">
         {history.length > 0 ? (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-panel-border">
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-5 py-2">Date</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-2 py-2">Job</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-2 py-2">Company</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-center px-2 py-2">Score</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-right px-5 py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((item) => (
-                <tr
-                  key={item.id}
-                  onClick={() => handleRowClick(item)}
-                  className="border-b border-panel-border last:border-0 hover:bg-background transition-colors cursor-pointer"
-                >
-                  <td className="text-xs text-[#1A1A1A] px-5 py-2.5">
-                    {item.created_at ? formatDate(item.created_at) : "—"}
-                  </td>
-                  <td className="text-xs text-[#1A1A1A] px-2 py-2.5 max-w-[150px] truncate">
-                    {item.job_title || "General"}
-                  </td>
-                  <td className="text-xs text-muted px-2 py-2.5 max-w-[120px] truncate">
-                    {item.company || "—"}
-                  </td>
-                  <td className="text-center px-2 py-2.5">
-                    {item.score != null ? (
-                      <ScoreCell score={item.score} />
-                    ) : (
-                      <span className="text-[10px] text-muted">—</span>
+          <div className="divide-y divide-surface-container-high">
+            {history.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => handleRowClick(item)}
+                className="flex items-center justify-between gap-3 px-6 py-3 hover:bg-surface-container-low/50 transition-colors cursor-pointer"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-on-surface truncate">
+                    {item.job_title || "General Interview"}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {item.company && <span className="text-[11px] text-on-surface-variant truncate">{item.company}</span>}
+                    {item.created_at && (
+                      <span className="text-[11px] text-outline shrink-0">{formatDate(item.created_at)}</span>
                     )}
-                  </td>
-                  <td className="text-right px-5 py-2.5">
-                    {item.review ? (
-                      <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700">
-                        Reviewed
-                      </Badge>
-                    ) : item.transcript?.length > 0 ? (
-                      <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700">
-                        Completed
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px]">
-                        Started
-                      </Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {item.score != null && (
+                    <ScoreCell score={item.score} />
+                  )}
+                  {item.review ? (
+                    <Badge variant="success" className="text-[10px]">
+                      Reviewed
+                    </Badge>
+                  ) : item.transcript?.length > 0 ? (
+                    <Badge variant="secondary" className="text-[10px] bg-warning-light text-amber-700">
+                      Completed
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px]">
+                      Started
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center py-8">
-            <History className="w-10 h-10 text-[#E8E8E3] mb-3" />
-            <p className="text-sm text-muted text-center">
-              No interviews yet
+          <div className="flex-1 flex flex-col items-center justify-center py-10">
+            <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center mb-4">
+              <History className="w-6 h-6 text-outline-variant" />
+            </div>
+            <p className="text-sm font-semibold text-on-surface mb-1">No interviews yet</p>
+            <p className="text-xs text-on-surface-variant text-center max-w-[200px]">
+              Start a session to build your history
             </p>
           </div>
         )}

@@ -115,38 +115,38 @@ export default function JobActions({ slug, offer }) {
   }
 
   return (
-    <Card className="border-panel-border shadow-card h-full flex flex-col">
-      <CardHeader className="pb-2 shrink-0">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-amber-500" />
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-bold flex items-center gap-2">
+          <Lightbulb className="w-4 h-4 text-warning" />
           Actions
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-4">
+      <CardContent className="space-y-4">
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {offer?.url && (
             <a
               href={offer.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-full hover:bg-primary-container hover:shadow-ambient hover:-translate-y-0.5 transition-all cursor-pointer"
             >
-              <Send className="w-4 h-4" />
-              Apply
+              <Send className="w-4 h-4 shrink-0" />
+              <span className="truncate">Apply</span>
             </a>
           )}
           <button
             onClick={handleGenerateCV}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-background text-[#1A1A1A] text-sm font-medium rounded-full border border-panel-border hover:bg-[#EAEAE5] hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-container-lowest text-on-surface text-sm font-semibold rounded-full border border-outline-variant/20 hover:bg-surface-container-low hover:-translate-y-0.5 transition-all cursor-pointer"
           >
-            <FileText className="w-4 h-4" />
-            Generate CV
+            <FileText className="w-4 h-4 shrink-0" />
+            <span className="truncate">Generate CV</span>
           </button>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-panel-border" />
+        <div className="h-px bg-surface-container-high" />
 
         {/* Start Interview */}
         <button
@@ -162,18 +162,18 @@ export default function JobActions({ slug, offer }) {
               },
             },
           })}
-          className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-primary text-on-primary text-sm font-semibold rounded-full hover:bg-primary-container hover:shadow-ambient hover:-translate-y-0.5 transition-all cursor-pointer"
         >
-          <Mic className="w-4 h-4" />
+          <Mic className="w-4 h-4 shrink-0" />
           Start Interview Simulation
         </button>
 
         {/* Interview History for this job */}
         {interviews.length > 0 && (
           <>
-            <div className="border-t border-panel-border" />
+            <div className="h-px bg-surface-container-high" />
             <div>
-              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+              <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">
                 Interview History ({interviews.length})
               </p>
               <div className="space-y-2">
@@ -181,24 +181,24 @@ export default function JobActions({ slug, offer }) {
                   <div
                     key={iv.id}
                     onClick={() => navigate("/interview/summary", { state: { interviewId: iv.id } })}
-                    className="flex items-center justify-between p-2 rounded-lg bg-background border border-panel-border hover:bg-[#EAEAE5] transition cursor-pointer"
+                    className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition cursor-pointer"
                   >
                     <div className="min-w-0">
-                      <p className="text-xs text-[#1A1A1A] font-medium truncate">{iv.mode || "Interview"}</p>
+                      <p className="text-xs text-on-surface font-semibold truncate">{iv.mode || "Interview"}</p>
                       {iv.created_at && (
-                        <p className="text-[10px] text-muted">{formatDate(iv.created_at)}</p>
+                        <p className="text-[10px] text-on-surface-variant">{formatDate(iv.created_at)}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {iv.score != null && (
-                        <span className={`text-xs font-semibold ${iv.score >= 7 ? "text-emerald-600" : iv.score >= 5 ? "text-amber-600" : "text-red-500"}`}>
+                        <span className={`text-xs font-bold ${iv.score >= 7 ? "text-on-tertiary-container" : iv.score >= 5 ? "text-warning" : "text-error"}`}>
                           {iv.score}/10
                         </span>
                       )}
                       {iv.review ? (
-                        <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700">Reviewed</Badge>
+                        <Badge variant="success" className="text-[10px]">Reviewed</Badge>
                       ) : iv.transcript?.length > 0 ? (
-                        <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700">Completed</Badge>
+                        <Badge variant="secondary" className="text-[10px] bg-warning-light text-amber-700">Completed</Badge>
                       ) : (
                         <Badge variant="secondary" className="text-[10px]">Started</Badge>
                       )}
@@ -229,21 +229,21 @@ export default function JobActions({ slug, offer }) {
 
           {cvGenerating && (
             <div className="flex flex-col items-center gap-3 py-6">
-              <svg className="animate-spin h-8 w-8 text-[#1A1A1A]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <p className="text-2xl font-mono text-[#1A1A1A]">{cvElapsed}s</p>
+              <p className="text-2xl font-mono text-on-surface">{cvElapsed}s</p>
             </div>
           )}
 
           {cvError && (
-            <p className="text-sm text-red-500 text-center py-4">{cvError}</p>
+            <p className="text-sm text-error text-center py-4">{cvError}</p>
           )}
 
           {cvResult && (
             <div className="space-y-4">
-              <div className="bg-white border border-panel-border rounded-lg overflow-hidden" style={{ height: "300px" }}>
+              <div className="bg-surface-container-lowest rounded-xl overflow-hidden" style={{ height: "300px" }}>
                 <iframe
                   srcDoc={cvResult.html}
                   title="CV Preview"
@@ -254,14 +254,14 @@ export default function JobActions({ slug, offer }) {
               <div className="flex gap-2">
                 <button
                   onClick={downloadCV}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-lg hover:bg-[#2A2A2A] transition-all cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-full hover:bg-primary-container transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   Download HTML
                 </button>
                 <button
                   onClick={openCVInNewTab}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-background text-[#1A1A1A] text-sm font-medium rounded-lg border border-panel-border hover:bg-[#EAEAE5] transition-all cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-container-lowest text-on-surface text-sm font-semibold rounded-full border border-outline-variant/20 hover:bg-surface-container-low transition-all cursor-pointer"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Open Full View

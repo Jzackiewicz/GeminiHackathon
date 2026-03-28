@@ -32,60 +32,60 @@ export default function ROIActions() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <h2 className="text-base font-semibold flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent" />
-          AI Suggestions
-        </h2>
-        <div className="flex items-center gap-2">
-          {suggestions && (
-            <span className="text-xs text-muted">
-              {suggestions.length} actions
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={regenerate}
-            disabled={generating}
-            className="h-7 px-2 text-xs text-muted hover:text-foreground"
-          >
-            {generating ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3.5 h-3.5" />
-            )}
-            {suggestions ? "Regenerate" : "Generate"}
-          </Button>
+    <div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <h2 className="font-headline text-2xl md:text-3xl font-extrabold text-on-surface tracking-tight mb-2">
+            AI Suggestions for Growth
+          </h2>
+          <p className="text-on-surface-variant text-base max-w-lg">
+            Actionable insights generated from your unique professional profile.
+          </p>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={regenerate}
+          disabled={generating}
+          className="text-on-surface-variant hover:text-on-surface shrink-0"
+        >
+          {generating ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="w-3.5 h-3.5" />
+          )}
+          {suggestions ? "Regenerate" : "Generate"}
+        </Button>
       </div>
 
       {error && (
-        <p className="text-xs text-red-600 mb-2 px-1">{error}</p>
+        <p className="text-xs text-error mb-4">{error}</p>
       )}
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center text-muted text-sm">
+        <div className="flex items-center justify-center text-on-surface-variant text-sm py-16">
           <Loader2 className="w-4 h-4 animate-spin mr-2" />
           Loading...
         </div>
       ) : generating ? (
-        <div className="flex-1 flex items-center justify-center text-muted text-sm">
+        <div className="flex items-center justify-center text-on-surface-variant text-sm py-16">
           <Loader2 className="w-4 h-4 animate-spin mr-2" />
           Generating suggestions...
         </div>
       ) : suggestions && suggestions.length > 0 ? (
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 auto-rows-min">
-          {suggestions.map((action, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {suggestions.slice(0, 6).map((action, i) => (
             <ROIActionCard key={i} action={action} />
           ))}
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-muted text-sm gap-3 py-8">
-          <Sparkles className="w-8 h-8 text-muted/40" />
-          <p>No suggestions yet. Connect your GitHub profile, then generate personalized career advice.</p>
-          <Button variant="outline" size="sm" onClick={regenerate} disabled={generating}>
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-14 h-14 rounded-2xl bg-surface-container-lowest shadow-card flex items-center justify-center mb-4">
+            <Sparkles className="w-6 h-6 text-outline-variant" />
+          </div>
+          <p className="text-sm font-semibold text-on-surface mb-1">No suggestions yet</p>
+          <p className="text-xs text-on-surface-variant text-center max-w-[260px] mb-4">Connect your GitHub profile, then generate personalized career advice</p>
+          <Button variant="outline" size="sm" onClick={regenerate} disabled={generating} className="shadow-card">
             Generate Suggestions
           </Button>
         </div>
