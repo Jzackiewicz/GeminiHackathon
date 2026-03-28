@@ -63,5 +63,12 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+
+    # Migrations: add columns that may be missing from older DBs
+    cursor = conn.execute("PRAGMA table_info(users)")
+    existing = {row[1] for row in cursor.fetchall()}
+    if "github_token" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN github_token TEXT")
+
     conn.commit()
     conn.close()
