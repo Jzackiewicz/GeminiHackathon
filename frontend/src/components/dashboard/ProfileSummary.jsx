@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export default function ProfileSummary({ profile, onUpdate }) {
+export default function ProfileSummary({ profile, scanning, onUpdate }) {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [rescanning, setRescanning] = useState(false);
@@ -44,7 +44,53 @@ export default function ProfileSummary({ profile, onUpdate }) {
   }
 
   const hasProfile = profile?.github_username;
+  const hasAnalysis = profile?.primary_role;
+  const isScanning = scanning || rescanning;
 
+  // State: GitHub connected but analysis not yet done (auto-scanning)
+  if (hasProfile && !hasAnalysis) {
+    return (
+      <div>
+        <div className="flex items-center gap-4 mb-6">
+          <Avatar className="h-14 w-14">
+            <AvatarFallback className="bg-primary-container text-on-primary text-lg font-bold font-headline">
+              {profile.github_username.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="font-headline text-2xl md:text-3xl font-extrabold text-on-surface tracking-tight">
+              {profile.github_username}
+            </h1>
+            <div className="flex items-center gap-1.5 text-sm text-on-tertiary-container font-medium mt-1">
+              <GithubIcon className="w-3.5 h-3.5" />
+              <span>Connected</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface-container-lowest rounded-2xl p-8 shadow-card max-w-lg">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 rounded-full bg-tertiary-fixed-dim/20 flex items-center justify-center shrink-0">
+              <Loader2 className="w-5 h-5 text-on-tertiary-container animate-spin" />
+            </div>
+            <div>
+              <p className="font-headline font-bold text-on-surface">Analyzing your profile</p>
+              <p className="text-sm text-on-surface-variant">Scanning repositories, languages, and activity...</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <ScanStep label="Fetching GitHub data" done />
+            <ScanStep label="Analyzing code patterns" active={isScanning} />
+            <ScanStep label="Building skill profile" />
+            <ScanStep label="Generating AI summary" />
+          </div>
+          <p className="text-xs text-on-surface-variant mt-4">This usually takes 30–60 seconds. You'll see your full profile once it's ready.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // State: no GitHub connected at all
   if (!hasProfile) {
     return (
       <div>
@@ -78,6 +124,7 @@ export default function ProfileSummary({ profile, onUpdate }) {
     );
   }
 
+  // State: fully analyzed profile
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
@@ -103,10 +150,10 @@ export default function ProfileSummary({ profile, onUpdate }) {
               variant="ghost"
               size="sm"
               onClick={rescan}
-              disabled={rescanning}
+              disabled={isScanning}
               className="h-7 px-2 text-xs text-on-surface-variant hover:text-on-surface"
             >
-              {rescanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              {isScanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
               Rescan
             </Button>
           </div>
@@ -131,6 +178,29 @@ export default function ProfileSummary({ profile, onUpdate }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function ScanStep({ label, done, active }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-5 h-5 flex items-center justify-center shrink-0">
+        {done ? (
+          <div className="w-5 h-5 rounded-full bg-tertiary-fixed-dim flex items-center justify-center">
+            <svg className="w-3 h-3 text-on-tertiary-fixed" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        ) : active ? (
+          <Loader2 className="w-4 h-4 text-on-tertiary-container animate-spin" />
+        ) : (
+          <div className="w-4 h-4 rounded-full border-2 border-outline-variant" />
+        )}
+      </div>
+      <span className={`text-sm ${done ? "text-on-surface font-medium" : active ? "text-on-surface" : "text-outline"}`}>
+        {label}
+      </span>
     </div>
   );
 }
