@@ -54,7 +54,7 @@ export default function AddDataSource() {
           {sources.map((source) => (
             <button
               key={source.name}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-panel-border hover:border-accent hover:bg-accent-light/30 transition-all text-left cursor-pointer group"
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-panel-border hover:bg-accent-light/30 hover:shadow-sm transition-all text-left cursor-pointer group"
             >
               <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center group-hover:bg-accent-light transition-colors">
                 <source.icon className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />

@@ -52,7 +52,7 @@ function MatchRing({ score }) {
 
 export default function JobOfferCard({ offer }) {
   return (
-    <Card className="border-panel-border shadow-card hover:shadow-card-hover transition-shadow duration-200 cursor-pointer group">
+    <Card className="border-panel-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
       <CardContent className="p-4 flex items-center gap-3">
         <MatchRing score={offer.matchScore} />
         <div className="flex-1 min-w-0">
@@ -69,7 +69,7 @@ export default function JobOfferCard({ offer }) {
               <Badge
                 key={tag}
                 variant="secondary"
-                className="text-[10px] font-normal bg-background border-panel-border px-1.5 py-0"
+                className="text-[10px] font-normal px-1.5 py-0"
               >
                 {tag}
               </Badge>
