@@ -73,6 +73,7 @@ class VapiTestRequest(BaseModel):
     job_title: str = "Senior Backend Developer"
     company: str | None = "Test Corp"
     requirements: str | None = "Python, FastAPI, PostgreSQL"
+    difficulty: str = "medium"  # easy, medium, hard, faang
 
 
 @router.get("/vapi/config")
@@ -100,6 +101,7 @@ def create_test_assistant(body: VapiTestRequest):
                 job_title=body.job_title,
                 company=body.company,
                 requirements=body.requirements,
+                difficulty=body.difficulty,
             )
         log.info(f"VAPI assistant created: {assistant_id}")
         return {"assistant_id": assistant_id}

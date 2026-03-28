@@ -67,12 +67,15 @@ def create_interview_assistant(
     job_title: str,
     company: str | None,
     requirements: str | None,
+    difficulty: str = "medium",
 ) -> str:
     """Create a VAPI assistant that conducts a mock technical interview.
 
     Returns the assistant ID.
     """
     client = get_vapi()
+
+    difficulty_guidelines = get_prompt("difficulty_levels", difficulty)
 
     system_prompt = get_prompt(
         "interview", "system",
@@ -82,6 +85,8 @@ def create_interview_assistant(
         job_title=job_title,
         company=company or "Not specified",
         requirements=requirements or "Not specified",
+        difficulty=difficulty.upper(),
+        difficulty_guidelines=difficulty_guidelines,
     )
     first_message = get_prompt(
         "interview", "first_message",

@@ -850,6 +850,7 @@ function VapiDebug({ analysis, githubData }) {
   const [jobTitle, setJobTitle] = useState("Senior Backend Developer");
   const [company, setCompany] = useState("Test Corp");
   const [requirements, setRequirements] = useState("Python, FastAPI, PostgreSQL");
+  const [difficulty, setDifficulty] = useState("medium");
   const [autoFilled, setAutoFilled] = useState(false);
 
   // Auto-fill from Gemini analysis
@@ -902,6 +903,7 @@ function VapiDebug({ analysis, githubData }) {
       job_title: jobTitle,
       company: company || null,
       requirements: requirements || null,
+      difficulty,
     };
   }
 
@@ -1080,6 +1082,25 @@ function VapiDebug({ analysis, githubData }) {
               Job Discovery
             </button>
           </div>
+
+          {mode === "interview" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Difficulty:</span>
+              {["easy", "medium", "hard", "faang"].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDifficulty(d)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                    difficulty === d
+                      ? d === "easy" ? "bg-green-600" : d === "medium" ? "bg-blue-600" : d === "hard" ? "bg-orange-600" : "bg-red-600"
+                      : "bg-gray-800 hover:bg-gray-700"
+                  }`}
+                >
+                  {d === "faang" ? "FAANG" : d.charAt(0).toUpperCase() + d.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Name"
