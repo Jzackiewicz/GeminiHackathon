@@ -48,6 +48,7 @@ def init_db():
             url TEXT,
             description TEXT,
             requirements TEXT,
+            company_insight TEXT,
             selected BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -71,6 +72,11 @@ def init_db():
     existing = {row[1] for row in cursor.fetchall()}
     if "github_token" not in existing:
         conn.execute("ALTER TABLE users ADD COLUMN github_token TEXT")
+
+    cursor = conn.execute("PRAGMA table_info(job_offers)")
+    existing = {row[1] for row in cursor.fetchall()}
+    if "company_insight" not in existing:
+        conn.execute("ALTER TABLE job_offers ADD COLUMN company_insight TEXT")
 
     conn.commit()
     conn.close()

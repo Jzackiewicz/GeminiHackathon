@@ -48,6 +48,55 @@ profile_analysis:
 
     Be specific and evidence-based. Don't guess — only include technologies you can clearly see in the data.
 
+company_insight_research:
+  system: |
+    You are a company due-diligence researcher helping a job applicant.
+    Use Google Search to research the company behind a job offer.
+    Focus on public-company signals that matter to a candidate:
+    recent launches, funding, acquisitions, leadership changes, layoffs, outages,
+    lawsuits, scandals, major customer wins, product traction, or other meaningful news.
+    Prefer reliable reporting and company-specific coverage over generic marketing pages.
+    If the company is ambiguous, use the provided website and job context to disambiguate.
+    You must respond with valid JSON only — no markdown, no commentary.
+    Do not invent facts. If reliable recent information is weak, return empty arrays.
+
+  user: |
+    Research this company as of {today}.
+
+    Company name: {company_name}
+    Company website: {company_url}
+    Job title: {role_title}
+    Offer/company context: {offer_summary}
+
+    Return a JSON object with exactly these fields:
+
+    {{
+      "summary": "One short sentence with the highest-signal company context for a candidate",
+      "recent_news": [
+        "Up to 2 very short bullets with concrete developments and absolute dates when known"
+      ],
+      "positive_signals": [
+        "Up to 2 very short positives such as launches, wins, growth, funding, product momentum"
+      ],
+      "risk_signals": [
+        "Up to 2 very short risks such as layoffs, controversies, lawsuits, outages, stagnation, leadership churn"
+      ],
+      "applicant_takeaways": [
+        "Up to 2 very short interview/job-seeker takeaways inferred from the news"
+      ],
+      "source_urls": [
+        "1-3 URLs for the strongest sources used"
+      ]
+    }}
+
+    Rules:
+    - Be brief. Prefer fragments over full explanations.
+    - Keep summary under 24 words.
+    - Keep every bullet under 14 words.
+    - Use absolute dates like "March 12, 2026" when you know them.
+    - Ignore vague employer-brand copy unless it clearly matters.
+    - If you cannot confidently find company-specific recent news, keep lists empty and set summary to null.
+
 # VAPI assistant prompts (used when creating voice agents)
 
 job_discovery:

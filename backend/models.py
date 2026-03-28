@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 # --- Auth ---
@@ -55,6 +55,16 @@ class GitHubCallbackRequest(BaseModel):
 
 # --- Jobs ---
 
+class CompanyInsight(BaseModel):
+    summary: str | None = None
+    recent_news: list[str] = Field(default_factory=list)
+    positive_signals: list[str] = Field(default_factory=list)
+    risk_signals: list[str] = Field(default_factory=list)
+    applicant_takeaways: list[str] = Field(default_factory=list)
+    source_urls: list[str] = Field(default_factory=list)
+    researched_at: str | None = None
+
+
 class JobOfferOut(BaseModel):
     id: int
     title: str
@@ -62,6 +72,7 @@ class JobOfferOut(BaseModel):
     url: str | None = None
     description: str | None = None
     requirements: str | None = None
+    company_insight: CompanyInsight | None = None
 
 
 class JobSearchQuery(BaseModel):

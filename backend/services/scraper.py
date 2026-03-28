@@ -1,5 +1,10 @@
+import asyncio
 import os
+import re
+from html import unescape
+
 import httpx
+from services.llm import research_company_insight
 
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -7,6 +12,11 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 MAX_REPOS_LANGUAGES = 15  # repos to fetch per-repo language breakdown for
 MAX_REPOS_README = 5      # repos to fetch READMEs for
 README_MAX_CHARS = 3000   # truncate long READMEs
+JJIT_LIST_URL = "https://api.justjoin.it/v2/user-panel/offers"
+JJIT_DETAIL_URL = "https://justjoin.it/api/candidate-api/offers/{slug}"
+JJIT_PUBLIC_OFFER_URL = "https://justjoin.it/job-offer/{slug}"
+JJIT_MAX_RESULTS = 10
+JJIT_COMPANY_INSIGHT_CONCURRENCY = 3
 
 
 def _github_headers(token: str | None = None) -> dict:
@@ -179,33 +189,196 @@ async def deep_scrape_github(username: str, token: str | None = None) -> dict:
     }
 
 
+def _strip_html(html_text: str | None) -> str:
+    text = re.sub(r"<[^>]+>", " ", html_text or "")
+    text = unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _normalize_skill_name(skill: str | dict | None) -> str | None:
+    if isinstance(skill, str):
+        name = skill.strip()
+    elif isinstance(skill, dict):
+        name = str(skill.get("name") or "").strip()
+    else:
+        name = ""
+    return name or None
+
+
+def _unique_list(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            unique.append(value)
+    return unique
+
+
+def _normalize_required_skills(skills: list[str | dict] | None) -> list[str]:
+    return _unique_list(
+        [name for skill in (skills or []) if (name := _normalize_skill_name(skill))]
+    )
+
+
+def _truncate_summary(text: str | None, max_sentences: int = 2, max_chars: int = 280) -> str | None:
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return None
+
+    sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+    summary = " ".join(sentences[:max_sentences]).strip() or cleaned
+    if len(summary) <= max_chars:
+        return summary
+
+    clipped = summary[: max_chars - 1].rsplit(" ", 1)[0].strip()
+    return f"{clipped}…" if clipped else summary[:max_chars]
+
+
+def _extract_company_summary(detail: dict) -> str | None:
+    short_description = _truncate_summary(detail.get("companyProfileShortDescription"))
+    if short_description:
+        return short_description
+
+    body_text = _strip_html(detail.get("body"))
+    if not body_text:
+        return None
+
+    lowered = body_text.lower()
+    for marker in ("about us", "about the company", "who we are"):
+        index = lowered.find(marker)
+        if index != -1:
+            return _truncate_summary(body_text[index:])
+
+    return _truncate_summary(body_text)
+
+
+def _build_company_research_context(offer: dict, detail: dict | None) -> str | None:
+    detail = detail or {}
+    company_snapshot = _extract_company_summary(detail)
+    body_excerpt = _truncate_summary(_strip_html(detail.get("body")), max_sentences=3, max_chars=500)
+    parts = [
+        company_snapshot,
+        body_excerpt if body_excerpt != company_snapshot else None,
+        f"Role title: {offer.get('title')}" if offer.get("title") else None,
+    ]
+    context = " ".join(part for part in parts if part)
+    return context or None
+
+
+async def _research_company_insight_for_offer(
+    offer: dict,
+    detail: dict | None,
+    semaphore: asyncio.Semaphore,
+) -> dict | None:
+    company_name = str(offer.get("companyName") or "").strip()
+    if not company_name:
+        return None
+
+    try:
+        async with semaphore:
+            return await asyncio.to_thread(
+                research_company_insight,
+                company_name=company_name,
+                company_url=(detail or {}).get("companyUrl"),
+                role_title=offer.get("title"),
+                offer_summary=_build_company_research_context(offer, detail),
+            )
+    except Exception:
+        return None
+
+
+def _matches_keywords(offer: dict, keywords: list[str] | None) -> bool:
+    if not keywords:
+        return True
+
+    searchable = " ".join(
+        filter(
+            None,
+            [
+                offer.get("title"),
+                offer.get("companyName"),
+                " ".join(_normalize_required_skills(offer.get("requiredSkills"))),
+            ],
+        )
+    ).lower()
+    return any(keyword.lower() in searchable for keyword in keywords)
+
+
+async def _fetch_justjoinit_offer_detail(client: httpx.AsyncClient, slug: str | None) -> dict | None:
+    if not slug:
+        return None
+
+    try:
+        response = await client.get(
+            JJIT_DETAIL_URL.format(slug=slug),
+            headers={"Accept": "application/json"},
+        )
+        response.raise_for_status()
+        return response.json()
+    except (httpx.HTTPError, ValueError):
+        return None
+
+
+async def _enrich_justjoinit_offer(
+    client: httpx.AsyncClient,
+    offer: dict,
+    company_insight_tasks: dict[str, asyncio.Task],
+    semaphore: asyncio.Semaphore,
+) -> dict:
+    slug = offer.get("slug")
+    detail = await _fetch_justjoinit_offer_detail(client, slug)
+    required_skills = _normalize_required_skills(
+        (detail or {}).get("requiredSkills") or offer.get("requiredSkills")
+    )
+    company_key = "|".join(
+        [
+            str(offer.get("companyName") or "").strip().lower(),
+            str((detail or {}).get("companyUrl") or "").strip().lower(),
+        ]
+    )
+    if company_key and company_key not in company_insight_tasks:
+        company_insight_tasks[company_key] = asyncio.create_task(
+            _research_company_insight_for_offer(offer, detail, semaphore)
+        )
+
+    return {
+        "title": offer.get("title"),
+        "company": offer.get("companyName"),
+        "url": JJIT_PUBLIC_OFFER_URL.format(slug=slug or ""),
+        "description": _strip_html((detail or {}).get("body")) or None,
+        "requiredSkills": required_skills,
+        "company_insight": await company_insight_tasks.get(company_key) if company_key else None,
+    }
+
+
 async def search_justjoinit(keywords: list[str] | None = None, remote: bool = True) -> list[dict]:
-    """Search JustJoinIT for job offers."""
-    async with httpx.AsyncClient() as client:
+    """Search JustJoinIT offers and enrich them with applicant-facing company insight."""
+    headers = {"Accept": "application/json", "version": "2"}
+    async with httpx.AsyncClient(headers=headers, timeout=20) as client:
         resp = await client.get(
-            "https://api.justjoin.it/v2/user-panel/offers",
+            JJIT_LIST_URL,
             params={
                 "page": 1,
                 "sortBy": "published",
                 "orderBy": "DESC",
-                "perPage": 20,
+                "perPage": 25,
                 "remote": remote,
             },
         )
         resp.raise_for_status()
         data = resp.json()
 
-    offers = data.get("data", [])
-    results = []
-    for offer in offers:
-        title = offer.get("title", "").lower()
-        if keywords and not any(k.lower() in title for k in keywords):
-            continue
-        results.append({
-            "title": offer.get("title"),
-            "company": offer.get("companyName"),
-            "url": f"https://justjoin.it/offers/{offer.get('slug', '')}",
-            "requiredSkills": [s.get("name") for s in offer.get("requiredSkills", [])],
-        })
+        offers = data.get("data", [])
+        matched_offers = [offer for offer in offers if _matches_keywords(offer, keywords)]
+        selected_offers = matched_offers[:JJIT_MAX_RESULTS]
+        company_insight_tasks: dict[str, asyncio.Task] = {}
+        semaphore = asyncio.Semaphore(JJIT_COMPANY_INSIGHT_CONCURRENCY)
 
-    return results
+        tasks = [
+            _enrich_justjoinit_offer(client, offer, company_insight_tasks, semaphore)
+            for offer in selected_offers
+        ]
+        if not tasks:
+            return []
+        return await asyncio.gather(*tasks)
