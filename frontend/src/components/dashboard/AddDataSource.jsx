@@ -39,10 +39,11 @@ export default function AddDataSource({ profile }) {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="w-full border-dashed border-panel-border hover:border-accent hover:bg-accent-light/50 text-muted hover:text-accent transition-all cursor-pointer"
+          size="lg"
+          className="border-dashed border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest transition-all cursor-pointer shadow-none"
         >
           <Plus className="w-4 h-4" />
-          Add data source
+          Add source
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -57,24 +58,24 @@ export default function AddDataSource({ profile }) {
             <button
               key={source.name}
               disabled={source.connected}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg border border-panel-border text-left transition-all group ${
+              className={`w-full flex items-center gap-3 p-3.5 rounded-xl text-left transition-all group ${
                 source.connected
-                  ? "opacity-60 cursor-default"
-                  : "hover:bg-accent-light/30 hover:shadow-sm cursor-pointer"
+                  ? "opacity-60 cursor-default bg-surface-container-low"
+                  : "hover:bg-surface-container-low cursor-pointer"
               }`}
             >
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                source.connected ? "bg-emerald-50" : "bg-background group-hover:bg-accent-light"
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                source.connected ? "bg-tertiary-fixed-dim/20" : "bg-surface-container-high group-hover:bg-secondary-container"
               }`}>
                 {source.connected ? (
-                  <Check className="w-5 h-5 text-emerald-600" />
+                  <Check className="w-5 h-5 text-on-tertiary-container" />
                 ) : (
-                  <source.icon className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
+                  <source.icon className="w-5 h-5 text-on-surface-variant group-hover:text-on-surface transition-colors" />
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium">{source.name}</p>
-                <p className="text-xs text-muted">{source.description}</p>
+                <p className="text-sm font-semibold text-on-surface">{source.name}</p>
+                <p className="text-xs text-on-surface-variant">{source.description}</p>
               </div>
             </button>
           ))}

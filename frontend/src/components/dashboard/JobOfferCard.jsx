@@ -3,102 +3,73 @@ import { MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-function MatchRing({ score }) {
-  const radius = 22;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-
-  const color =
-    score >= 85
-      ? "#10B981"
-      : score >= 70
-        ? "#F59E0B"
-        : "#6B7280";
-
-  return (
-    <div className="relative w-14 h-14 shrink-0">
-      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
-        <circle
-          cx="28"
-          cy="28"
-          r={radius}
-          fill="none"
-          stroke="#E8E8E3"
-          strokeWidth="3"
-        />
-        <circle
-          cx="28"
-          cy="28"
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-700 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span
-          className="text-xs font-bold"
-          style={{ color }}
-        >
-          {score}%
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export default function JobOfferCard({ scored }) {
   const navigate = useNavigate();
   const offer = scored.offer;
   const score = scored.overall_score;
 
+  const scoreColor =
+    score >= 85
+      ? "text-on-tertiary-container"
+      : score >= 70
+        ? "text-warning"
+        : "text-outline";
+
   return (
     <Card
-      className="border-panel-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
+      className="hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
       onClick={() => navigate(`/job/${offer.slug}`)}
     >
-      <CardContent className="p-4 flex items-center gap-3">
-        <MatchRing score={score} />
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
-            {offer.title}
-          </h3>
-          {offer.company_name && (
-            <p className="text-xs text-muted font-medium">{offer.company_name}</p>
-          )}
-          <div className="flex items-center gap-2 mt-1">
-            {offer.city && (
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-muted-light" />
-                <span className="text-[11px] text-muted-light">{offer.city}</span>
-              </span>
-            )}
-            {offer.salary_display && (
-              <span className="text-[11px] text-muted-light">{offer.salary_display}</span>
-            )}
-          </div>
-          {offer.required_skills.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {offer.required_skills.slice(0, 4).map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="text-[10px] font-normal px-1.5 py-0"
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {offer.required_skills.length > 4 && (
-                <Badge variant="secondary" className="text-[10px] font-normal px-1.5 py-0 text-muted">
-                  +{offer.required_skills.length - 4}
-                </Badge>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex gap-3 min-w-0">
+            <div className="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center font-headline font-bold text-on-surface-variant shrink-0">
+              {(offer.company_name || "?")[0]}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-headline font-bold text-on-surface leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                {offer.title}
+              </h3>
+              {offer.company_name && (
+                <p className="text-sm text-on-surface-variant font-medium mt-0.5">
+                  {offer.company_name}
+                  {offer.city && <span className="text-outline"> · {offer.city}</span>}
+                </p>
               )}
             </div>
+          </div>
+          <div className="flex flex-col items-end shrink-0 ml-3">
+            <span className={`text-xl font-headline font-extrabold tracking-tighter ${scoreColor}`}>
+              {score}%
+            </span>
+            <span className="text-[10px] font-bold text-outline uppercase tracking-widest">Match</span>
+          </div>
+        </div>
+
+        {offer.required_skills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {offer.required_skills.slice(0, 4).map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-[10px] font-semibold">
+                {tag}
+              </Badge>
+            ))}
+            {offer.required_skills.length > 4 && (
+              <Badge variant="secondary" className="text-[10px] font-semibold text-outline">
+                +{offer.required_skills.length - 4}
+              </Badge>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-between items-center pt-4 border-t border-surface-container-high">
+          {offer.salary_display ? (
+            <span className="text-sm font-bold text-on-surface">{offer.salary_display}</span>
+          ) : (
+            <span />
           )}
+          <span className="text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors">
+            View Details →
+          </span>
         </div>
       </CardContent>
     </Card>

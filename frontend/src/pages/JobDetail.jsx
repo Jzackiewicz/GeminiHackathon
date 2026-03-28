@@ -37,9 +37,9 @@ export default function JobDetail() {
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col bg-background">
+      <div className="h-screen flex flex-col bg-surface">
         <TopBar user={user} onLogout={logout} />
-        <div className="flex-1 flex items-center justify-center text-muted text-sm">
+        <div className="flex-1 flex items-center justify-center text-on-surface-variant text-sm pt-16">
           <Loader2 className="w-5 h-5 animate-spin mr-2" />
           Loading job details...
         </div>
@@ -49,10 +49,10 @@ export default function JobDetail() {
 
   if (error || !detail) {
     return (
-      <div className="h-screen flex flex-col bg-background">
+      <div className="h-screen flex flex-col bg-surface">
         <TopBar user={user} onLogout={logout} />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted">{error || "Job offer not found"}</p>
+        <div className="flex-1 flex items-center justify-center pt-16">
+          <p className="text-sm text-on-surface-variant">{error || "Job offer not found"}</p>
         </div>
       </div>
     );
@@ -85,27 +85,19 @@ export default function JobDetail() {
   } : null;
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-surface">
       <TopBar user={user} onLogout={logout} />
 
-      {/* Two-column layout */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-y-auto lg:overflow-hidden">
-        {/* Left: Job Offer Content (~55%) */}
-        <div className="w-full lg:w-[55%] shrink-0 min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden pt-16 bg-surface-container-low">
+        {/* Left: Job Offer Content — scrolls independently */}
+        <div className="w-full lg:w-[58%] shrink-0 min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-6">
           <JobOfferContent offer={contentOffer} />
         </div>
 
-        {/* Right: Score + Actions (~45%) */}
-        <div className="flex-1 min-w-0 flex flex-col gap-4 min-h-0">
-          {/* Match Score */}
-          <div className="shrink-0">
-            <JobMatchScore match={matchData} />
-          </div>
-
-          {/* Actions (takes remaining space) */}
-          <div className="flex-1 min-h-0">
-            <JobActions slug={slug} offer={contentOffer} />
-          </div>
+        {/* Right: Score + Actions — scrolls independently */}
+        <div className="flex-1 min-w-0 min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-6 lg:pl-0 space-y-4">
+          <JobMatchScore match={matchData} />
+          <JobActions slug={slug} offer={contentOffer} />
         </div>
       </div>
     </div>

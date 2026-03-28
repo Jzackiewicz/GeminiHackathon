@@ -6,7 +6,6 @@ export default function InterviewAnalysis({ interview }) {
   const review = interview?.review;
   const hasAnalysis = !!review;
 
-  // Map real review shape to display — scale 1-10 score to percentage
   const score = review?.overall_score != null ? review.overall_score * 10 : 0;
   const strengths = (review?.strengths || []).map((s) =>
     typeof s === "string" ? s : `${s.area}: ${s.detail}`
@@ -21,32 +20,28 @@ export default function InterviewAnalysis({ interview }) {
     : "";
 
   return (
-    <Card className="border-panel-border shadow-card h-full flex flex-col">
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-2 shrink-0">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-500" />
+        <CardTitle className="text-base font-bold flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-warning" />
           Last Interview Analysis
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
         {hasAnalysis ? (
           <div className="flex flex-col h-full gap-4">
-            {/* Top: Score + Lists side by side */}
             <div className="flex gap-5">
-              {/* Score ring + date */}
               <div className="shrink-0 flex flex-col items-center gap-1.5">
                 <ScoreRing score={score} size={112} />
-                {date && <span className="text-[10px] text-muted">{date}</span>}
+                {date && <span className="text-[10px] text-on-surface-variant font-medium">{date}</span>}
               </div>
 
-              {/* Strengths + Weaknesses */}
               <div className="flex-1 min-w-0 space-y-3">
-                {/* Strengths */}
                 {strengths.length > 0 && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-1.5">
-                      <ThumbsUp className="w-3.5 h-3.5 text-success" />
-                      <span className="text-xs font-medium text-success uppercase tracking-wider">
+                      <ThumbsUp className="w-3.5 h-3.5 text-on-tertiary-container" />
+                      <span className="text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider">
                         Strengths
                       </span>
                     </div>
@@ -54,7 +49,7 @@ export default function InterviewAnalysis({ interview }) {
                       {strengths.map((item, i) => (
                         <li
                           key={i}
-                          className="text-xs text-[#1A1A1A] leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-success"
+                          className="text-xs text-on-surface leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-tertiary-fixed-dim"
                         >
                           {item}
                         </li>
@@ -63,12 +58,11 @@ export default function InterviewAnalysis({ interview }) {
                   </div>
                 )}
 
-                {/* Weaknesses */}
                 {weaknesses.length > 0 && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-1.5">
-                      <ThumbsDown className="w-3.5 h-3.5 text-danger" />
-                      <span className="text-xs font-medium text-danger uppercase tracking-wider">
+                      <ThumbsDown className="w-3.5 h-3.5 text-error" />
+                      <span className="text-[10px] font-bold text-error uppercase tracking-wider">
                         Improve
                       </span>
                     </div>
@@ -76,7 +70,7 @@ export default function InterviewAnalysis({ interview }) {
                       {weaknesses.map((item, i) => (
                         <li
                           key={i}
-                          className="text-xs text-[#1A1A1A] leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-danger"
+                          className="text-xs text-on-surface leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-error"
                         >
                           {item}
                         </li>
@@ -87,12 +81,11 @@ export default function InterviewAnalysis({ interview }) {
               </div>
             </div>
 
-            {/* Suggestions */}
             {suggestions.length > 0 && (
               <div>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-xs font-medium text-amber-600 uppercase tracking-wider">
+                  <Lightbulb className="w-3.5 h-3.5 text-warning" />
+                  <span className="text-[10px] font-bold text-warning uppercase tracking-wider">
                     Suggestions
                   </span>
                 </div>
@@ -100,7 +93,7 @@ export default function InterviewAnalysis({ interview }) {
                   {suggestions.map((item, i) => (
                     <li
                       key={i}
-                      className="text-xs text-[#1A1A1A] leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-amber-400"
+                      className="text-xs text-on-surface leading-relaxed pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:rounded-full before:bg-warning"
                     >
                       {typeof item === "string" ? item : item.detail || item.area || ""}
                     </li>
@@ -109,26 +102,28 @@ export default function InterviewAnalysis({ interview }) {
               </div>
             )}
 
-            {/* Summary */}
             {summary && (
-              <div className="bg-background rounded-lg p-3 border border-panel-border">
+              <div className="bg-surface-container-low rounded-xl p-3">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <FileText className="w-3.5 h-3.5 text-muted" />
-                  <span className="text-xs font-medium text-muted uppercase tracking-wider">
+                  <FileText className="w-3.5 h-3.5 text-on-surface-variant" />
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                     Summary
                   </span>
                 </div>
-                <p className="text-xs text-muted leading-relaxed">
+                <p className="text-xs text-on-surface-variant leading-relaxed">
                   {summary}
                 </p>
               </div>
             )}
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center py-8">
-            <Trophy className="w-10 h-10 text-[#E8E8E3] mb-3" />
-            <p className="text-sm text-muted text-center">
-              Complete an interview to see your analysis
+          <div className="flex-1 flex flex-col items-center justify-center py-10">
+            <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center mb-4">
+              <Trophy className="w-6 h-6 text-outline-variant" />
+            </div>
+            <p className="text-sm font-semibold text-on-surface mb-1">No analysis yet</p>
+            <p className="text-xs text-on-surface-variant text-center max-w-[200px]">
+              Complete an interview to see your performance breakdown
             </p>
           </div>
         )}

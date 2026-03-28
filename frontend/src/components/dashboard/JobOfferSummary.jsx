@@ -11,30 +11,30 @@ export default function JobOfferSummary({ offer }) {
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Briefcase className="w-4 h-4 text-accent" />
-          <h3 className="text-xs font-medium text-muted uppercase tracking-wider">
+          <Briefcase className="w-4 h-4 text-on-surface-variant" />
+          <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
             Job Offer
           </h3>
         </div>
-        <p className="text-xs text-muted">No job selected. Pick one from the dashboard.</p>
+        <p className="text-xs text-on-surface-variant">No job selected. Pick one from the dashboard.</p>
       </div>
     );
   }
 
   const scoreColor =
     offer.matchScore >= 80
-      ? "text-emerald-600 bg-emerald-50"
+      ? "text-on-tertiary-container bg-tertiary-fixed-dim/20"
       : offer.matchScore >= 60
-      ? "text-amber-600 bg-amber-50"
-      : "text-red-600 bg-red-50";
+      ? "text-warning bg-warning-light"
+      : "text-error bg-error-container";
 
   const tags = offer.tags || [];
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <Briefcase className="w-4 h-4 text-accent" />
-        <h3 className="text-xs font-medium text-muted uppercase tracking-wider">
+        <Briefcase className="w-4 h-4 text-on-surface-variant" />
+        <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
           Job Offer
         </h3>
       </div>
@@ -43,19 +43,19 @@ export default function JobOfferSummary({ offer }) {
         <div className="flex items-start justify-between gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <button className="text-sm font-semibold text-[#1A1A1A] hover:text-accent transition-colors text-left cursor-pointer underline decoration-dotted underline-offset-2">
+              <button className="text-sm font-bold text-on-surface hover:text-primary transition-colors text-left cursor-pointer underline decoration-dotted underline-offset-2">
                 {offer.title}
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 bg-white border-panel-border shadow-card-hover" align="start">
+            <PopoverContent className="w-80" align="start">
               <div className="space-y-3">
                 <div>
-                  <h4 className="text-sm font-semibold text-[#1A1A1A]">{offer.title}</h4>
+                  <h4 className="text-sm font-bold text-on-surface">{offer.title}</h4>
                   {offer.company && (
-                    <p className="text-xs text-muted mt-0.5">{offer.company}</p>
+                    <p className="text-xs text-on-surface-variant mt-0.5">{offer.company}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted">
+                <div className="flex items-center gap-3 text-xs text-on-surface-variant">
                   {offer.location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
@@ -71,7 +71,7 @@ export default function JobOfferSummary({ offer }) {
                 </div>
                 {offer.matchScore != null && (
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${scoreColor}`}>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${scoreColor}`}>
                       {offer.matchScore}% match
                     </span>
                   </div>
@@ -81,7 +81,7 @@ export default function JobOfferSummary({ offer }) {
                     href={offer.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <ExternalLink className="w-3 h-3" />
                     View listing
@@ -101,14 +101,14 @@ export default function JobOfferSummary({ offer }) {
           </Popover>
 
           {offer.matchScore != null && (
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${scoreColor}`}>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${scoreColor}`}>
               {offer.matchScore}%
             </span>
           )}
         </div>
 
         {offer.company && (
-          <p className="text-xs text-muted">
+          <p className="text-xs text-on-surface-variant">
             {offer.company}{offer.location ? ` · ${offer.location}` : ""}
           </p>
         )}
@@ -121,7 +121,7 @@ export default function JobOfferSummary({ offer }) {
               </Badge>
             ))}
             {tags.length > 4 && (
-              <Badge variant="secondary" className="text-[10px] text-muted">
+              <Badge variant="secondary" className="text-[10px] text-outline">
                 +{tags.length - 4}
               </Badge>
             )}

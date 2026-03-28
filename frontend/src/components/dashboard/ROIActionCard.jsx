@@ -24,9 +24,9 @@ const typeConfig = {
 };
 
 const difficultyStyles = {
-  hard: "bg-danger-light text-red-700",
+  hard: "bg-error-container text-on-error-container",
   medium: "bg-warning-light text-amber-700",
-  easy: "bg-accent-light text-accent",
+  easy: "bg-tertiary-fixed-dim/20 text-on-tertiary-container",
 };
 
 export default function ROIActionCard({ action }) {
@@ -35,30 +35,30 @@ export default function ROIActionCard({ action }) {
   const difficulty = action.difficulty || "medium";
 
   return (
-    <Card className="border-panel-border shadow-card">
+    <Card className="hover:-translate-y-1 transition-all duration-200">
       <CardContent className="p-5 space-y-3">
         <div className="flex items-start justify-between">
-          <div className="w-10 h-10 rounded-xl bg-accent-light flex items-center justify-center transition-all">
-            <Icon className="w-5 h-5 text-accent group-hover:text-accent-dark transition-colors" />
+          <div className="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center">
+            <Icon className="w-5 h-5 text-on-secondary-container" />
           </div>
           <div className="flex gap-1.5">
             <Badge
               variant="secondary"
-              className="text-[10px] font-medium"
+              className="text-[10px] font-semibold"
             >
               {config.label}
             </Badge>
             <Badge
               variant="secondary"
-              className={`text-[10px] font-medium ${difficultyStyles[difficulty] || ""}`}
+              className={`text-[10px] font-semibold ${difficultyStyles[difficulty] || ""}`}
             >
               {difficulty}
             </Badge>
           </div>
         </div>
         <div>
-          <h3 className="text-sm font-semibold leading-snug">{action.title}</h3>
-          <p className="text-xs text-muted mt-1.5 leading-relaxed">
+          <h3 className="text-sm font-bold text-on-surface leading-snug">{action.title}</h3>
+          <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
             {action.description}
           </p>
         </div>

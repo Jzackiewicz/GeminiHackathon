@@ -69,6 +69,7 @@ def create_interview_assistant(
     requirements: str | None,
     difficulty: str = "medium",
     interview_type: str = "technical",
+    voice_id: str = "shimmer",
 ) -> str:
     """Create a VAPI assistant that conducts a mock technical interview.
 
@@ -110,7 +111,7 @@ def create_interview_assistant(
         },
         voice={
             "provider": "openai",
-            "voiceId": "nova",
+            "voiceId": voice_id,
         },
         transcriber={
             "provider": "deepgram",

@@ -60,6 +60,14 @@ export const api = {
     return request(`/jobs/scored?${q.toString()}`);
   },
   autoConfigureInterview: () => request("/interviews/auto-configure", { method: "POST" }),
+  voicePreview: async (voice) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/interviews/voice-preview?voice=${voice}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Failed to load preview");
+    return res.blob();
+  },
   vapiConfig: () => request("/interviews/vapi-config"),
   startInterview: (settings) =>
     request("/interviews/start", { method: "POST", body: JSON.stringify(settings) }),
