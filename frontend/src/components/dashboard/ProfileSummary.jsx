@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Loader2, Briefcase, MapPin } from "lucide-react";
+import { User, Loader2, RefreshCw } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { api } from "@/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,27 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export default function ProfileSummary({ profile, onUpdate }) {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rescanning, setRescanning] = useState(false);
+
+  async function rescan() {
+    setRescanning(true);
+    try {
+      await api.rescanProfile();
+      // Poll until analysis is back (backend nulls primary_role during rescan)
+      for (let i = 0; i < 30; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const updated = await api.getProfile();
+        if (updated.primary_role) {
+          onUpdate(updated);
+          return;
+        }
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setRescanning(false);
+    }
+  }
 
   async function connectGithub(e) {
     e.preventDefault();
@@ -29,10 +50,28 @@ export default function ProfileSummary({ profile, onUpdate }) {
   return (
     <Card className="border-panel-border shadow-card">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <User className="w-4 h-4 text-muted" />
-          Summary
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <User className="w-4 h-4 text-muted" />
+            Summary
+          </CardTitle>
+          {hasProfile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={rescan}
+              disabled={rescanning}
+              className="h-7 px-2 text-xs text-muted hover:text-foreground"
+            >
+              {rescanning ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              Regenerate
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {hasProfile ? (
