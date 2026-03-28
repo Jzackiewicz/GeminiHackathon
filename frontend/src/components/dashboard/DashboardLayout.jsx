@@ -1,4 +1,3 @@
-import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TopBar from "./TopBar";
 import ProfileSummary from "./ProfileSummary";
@@ -29,24 +28,6 @@ export default function DashboardLayout({ user, profile, onUpdateProfile, onLogo
           {/* Applications */}
           <JobApplications />
 
-          {/* AI trigger FAB */}
-          <div className="fixed bottom-6 right-[324px] z-50 hidden lg:block">
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full shadow-lg hover:bg-[#2A2A2A] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Ask AI
-            </button>
-          </div>
-          {/* Mobile FAB */}
-          <div className="fixed bottom-6 right-6 z-50 lg:hidden">
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full shadow-lg hover:bg-[#2A2A2A] hover:shadow-xl transition-all duration-200 cursor-pointer"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Ask AI
-            </button>
-          </div>
         </div>
 
         {/* Right: Job Offers (fixed column, own scroll) */}
