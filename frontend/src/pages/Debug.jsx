@@ -384,6 +384,119 @@ export default function Debug() {
 
         {/* VAPI Voice Test */}
         <VapiDebug analysis={analysis} githubData={result?.github_data} />
+
+        {/* Interview History */}
+        <InterviewHistory />
+      </div>
+    </div>
+  );
+}
+
+
+function InterviewHistory() {
+  const [interviews, setInterviews] = useState([]);
+  const [expanded, setExpanded] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadInterviews();
+  }, []);
+
+  async function loadInterviews() {
+    setLoading(true);
+    try {
+      const data = await api.listInterviews();
+      setInterviews(data);
+    } catch {
+      // not logged in or no interviews
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) return null;
+  if (interviews.length === 0) return null;
+
+  return (
+    <div className="bg-gray-900 rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Saved Interviews ({interviews.length})</h2>
+        <button onClick={loadInterviews} className="text-xs text-gray-500 hover:text-gray-300 transition">Refresh</button>
+      </div>
+
+      <div className="space-y-2">
+        {interviews.map((iv) => (
+          <div key={iv.id} className="bg-gray-800 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setExpanded(expanded === iv.id ? null : iv.id)}
+              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-750 transition"
+            >
+              <div className="flex items-center gap-3">
+                <span className={`px-2 py-0.5 rounded text-xs ${iv.mode === "interview" ? "bg-blue-500/20 text-blue-400" : "bg-green-500/20 text-green-400"}`}>
+                  {iv.mode === "interview" ? "Interview" : "Job Discovery"}
+                </span>
+                <span className="text-sm text-gray-300">{iv.job_title || "Untitled"}</span>
+                {iv.company && <span className="text-xs text-gray-500">at {iv.company}</span>}
+              </div>
+              <div className="flex items-center gap-3">
+                {iv.score != null && (
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    iv.score >= 7 ? "bg-green-500/20 text-green-400" :
+                    iv.score >= 4 ? "bg-yellow-500/20 text-yellow-400" :
+                    "bg-red-500/20 text-red-400"
+                  }`}>{iv.score}/10</span>
+                )}
+                <span className="text-xs text-gray-500">{iv.created_at?.slice(0, 16)}</span>
+                <span className="text-gray-400">{expanded === iv.id ? "▼" : "▶"}</span>
+              </div>
+            </button>
+
+            {expanded === iv.id && (
+              <div className="px-4 pb-4 space-y-3">
+                {/* Transcript */}
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  <p className="text-xs text-gray-500 font-medium">Transcript</p>
+                  {(iv.transcript || []).map((t, i) => (
+                    <div key={i} className={`text-xs px-3 py-1.5 rounded ${t.role === "assistant" ? "bg-gray-700 text-gray-300" : "bg-blue-900/30 text-blue-300"}`}>
+                      <span className="font-medium">{t.role === "assistant" ? "AI" : "You"}:</span> {t.text}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Review summary if available */}
+                {iv.review && (
+                  <div className="border border-purple-500/20 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                        iv.review.overall_score >= 7 ? "bg-green-500/20 text-green-400" :
+                        iv.review.overall_score >= 4 ? "bg-yellow-500/20 text-yellow-400" :
+                        "bg-red-500/20 text-red-400"
+                      }`}>{iv.review.overall_score}/10</span>
+                      {iv.review.hiring_recommendation && (
+                        <span className={`px-2 py-0.5 rounded text-xs ${
+                          iv.review.hiring_recommendation === "strong_hire" ? "bg-green-500/20 text-green-400" :
+                          iv.review.hiring_recommendation === "hire" ? "bg-blue-500/20 text-blue-400" :
+                          iv.review.hiring_recommendation === "maybe" ? "bg-yellow-500/20 text-yellow-400" :
+                          "bg-red-500/20 text-red-400"
+                        }`}>{iv.review.hiring_recommendation.replace("_", " ").toUpperCase()}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-300">{iv.review.overall_assessment}</p>
+
+                    {iv.review.recommendations?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-blue-400 font-medium mb-1">Key Recommendations</p>
+                        {iv.review.recommendations.slice(0, 3).map((r, i) => (
+                          <p key={i} className="text-xs text-gray-400">- {r.topic}: {r.action}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -430,6 +543,7 @@ function VapiDebug({ analysis, githubData }) {
   const [sending, setSending] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [review, setReview] = useState(null);
+  const [saved, setSaved] = useState(false);
   const chatHistoryRef = useRef([]);
   const vapiRef = useRef(null);
   const transcriptContainerRef = useRef(null);
@@ -457,6 +571,7 @@ function VapiDebug({ analysis, githubData }) {
     setError("");
     setTranscript([]);
     setReview(null);
+    setSaved(false);
     setStatus("Creating assistant...");
     try {
       const { assistant_id, error: apiErr } = await api.debugVapiCreateAssistant(getParams());
@@ -493,6 +608,7 @@ function VapiDebug({ analysis, githubData }) {
     setError("");
     setTranscript([]);
     setReview(null);
+    setSaved(false);
     chatHistoryRef.current = [];
     setStatus("Creating assistant...");
     try {
@@ -571,6 +687,23 @@ function VapiDebug({ analysis, githubData }) {
       setError(err.message);
     } finally {
       setReviewing(false);
+    }
+  }
+
+  async function saveInterview() {
+    try {
+      await api.saveInterview({
+        mode,
+        job_title: jobTitle,
+        company,
+        requirements,
+        transcript,
+        review: review || null,
+        score: review?.overall_score || null,
+      });
+      setSaved(true);
+    } catch (err) {
+      setError(err.message);
     }
   }
 
@@ -821,9 +954,23 @@ function VapiDebug({ analysis, githubData }) {
         </div>
       )}
 
+      {/* Save button */}
+      {!isActive && transcript.length > 2 && !saved && (
+        <button
+          onClick={saveInterview}
+          className="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
+        >
+          Save Interview
+        </button>
+      )}
+      {saved && (
+        <p className="text-green-400 text-xs text-center">Interview saved.</p>
+      )}
+
       {status === "Call ended" && !isActive && !review && transcript.length <= 2 && (
         <p className="text-gray-500 text-xs text-center">Session ended. Configure and start a new one above.</p>
       )}
     </div>
   );
 }
+

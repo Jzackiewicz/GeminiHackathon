@@ -42,8 +42,10 @@ export const api = {
   listJobs: () => request("/jobs"),
   selectJob: (job_offer_id) =>
     request("/jobs/select", { method: "POST", body: JSON.stringify({ job_offer_id }) }),
-  startInterview: () => request("/interview/start", { method: "POST" }),
+  saveInterview: (data) =>
+    request("/interviews", { method: "POST", body: JSON.stringify(data) }),
   listInterviews: () => request("/interviews"),
+  getInterview: (id) => request(`/interviews/${id}`),
   debugScrape: (username) => request(`/debug/scrape/${encodeURIComponent(username)}`),
   debugAnalyze: (githubData) =>
     request("/debug/analyze", { method: "POST", body: JSON.stringify(githubData) }),

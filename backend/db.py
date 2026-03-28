@@ -55,11 +55,13 @@ def init_db():
         CREATE TABLE IF NOT EXISTS interviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id),
-            job_offer_id INTEGER NOT NULL REFERENCES job_offers(id),
-            vapi_call_id TEXT,
+            mode TEXT NOT NULL DEFAULT 'interview',
+            job_title TEXT,
+            company TEXT,
+            requirements TEXT,
             transcript TEXT,
+            review TEXT,
             score INTEGER,
-            feedback TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)

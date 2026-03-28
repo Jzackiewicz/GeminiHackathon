@@ -76,10 +76,23 @@ class JobSelectRequest(BaseModel):
 
 # --- Interview ---
 
+class InterviewSave(BaseModel):
+    mode: str = "interview"
+    job_title: str = ""
+    company: str = ""
+    requirements: str = ""
+    transcript: list[dict] = []
+    review: dict | None = None
+    score: int | None = None
+
+
 class InterviewOut(BaseModel):
     id: int
-    job_offer_id: int
-    vapi_call_id: str | None = None
-    transcript: str | None = None
+    mode: str
+    job_title: str | None = None
+    company: str | None = None
+    requirements: str | None = None
+    transcript: list[dict] = []
+    review: dict | None = None
     score: int | None = None
-    feedback: str | None = None
+    created_at: str | None = None
