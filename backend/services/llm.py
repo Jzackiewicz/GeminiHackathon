@@ -1,5 +1,7 @@
+import json
 import os
 from google import genai
+from services.prompts import get_prompt
 
 MODEL = "gemini-3.1-pro-preview"
 
@@ -34,3 +36,22 @@ def prompt_with_context(context: str, question: str, system: str | None = None) 
     """Send a prompt with large context (e.g., repo data) and a question about it."""
     full_prompt = f"<context>\n{context}\n</context>\n\n{question}"
     return prompt(full_prompt, system=system)
+
+
+def analyze_github_profile(github_data: dict) -> dict:
+    """Use Gemini to analyze scraped GitHub data and produce a structured profile."""
+    system = get_prompt("profile_analysis", "system")
+    user_prompt = get_prompt("profile_analysis", "user")
+    context = json.dumps(github_data, indent=2, default=str)
+
+    raw = prompt_with_context(context, user_prompt, system=system)
+
+    # Strip markdown code fences if present
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[1]
+    if cleaned.endswith("```"):
+        cleaned = cleaned.rsplit("```", 1)[0]
+    cleaned = cleaned.strip()
+
+    return json.loads(cleaned)

@@ -30,6 +30,12 @@ def init_db():
             linkedin_data TEXT,
             technologies TEXT,
             summary TEXT,
+            experience_level TEXT,
+            primary_role TEXT,
+            strengths TEXT,
+            interests TEXT,
+            notable_projects TEXT,
+            github_raw TEXT,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 

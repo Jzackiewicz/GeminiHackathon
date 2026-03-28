@@ -20,10 +20,29 @@ class Token(BaseModel):
 
 # --- Profile ---
 
+class TechnologyDetail(BaseModel):
+    name: str
+    category: str
+    proficiency: str
+    evidence: str | None = None
+
+
+class NotableProject(BaseModel):
+    name: str
+    description: str | None = None
+    technologies: list[str] = []
+
+
 class ProfileOut(BaseModel):
     github_username: str | None = None
-    technologies: list[str] = []
+    technologies: list[TechnologyDetail] = []
     summary: str | None = None
+    experience_level: str | None = None
+    primary_role: str | None = None
+    strengths: list[str] = []
+    interests: list[str] = []
+    notable_projects: list[NotableProject] = []
+    analysis_ready: bool = False
 
 
 class GitHubConnect(BaseModel):

@@ -1,5 +1,6 @@
 import os
 from vapi import VapiClient
+from services.prompts import get_prompt
 
 _client: VapiClient | None = None
 
@@ -25,27 +26,20 @@ def create_job_discovery_assistant(
     """
     client = get_vapi()
 
-    system_prompt = f"""You are a friendly career advisor helping a candidate find the right job.
-
-Candidate Profile:
-- Name: {user_name}
-- Technologies: {', '.join(technologies)}
-- Background: {summary}
-
-Your task:
-1. Greet the candidate warmly
-2. Ask what kind of role they're looking for (frontend, backend, fullstack, data, etc.)
-3. Ask about preferred company size and culture
-4. Ask about salary expectations and location/remote preferences
-5. Ask about any specific technologies they want to work with
-6. Summarize their preferences back to them
-
-Keep the conversation natural and concise — aim for about 3-5 minutes.
-When you have enough information, thank them and end the conversation."""
+    system_prompt = get_prompt(
+        "job_discovery", "system",
+        user_name=user_name,
+        technologies=", ".join(technologies),
+        summary=summary,
+    )
+    first_message = get_prompt(
+        "job_discovery", "first_message",
+        user_name=user_name,
+    )
 
     assistant = client.assistants.create(
         name=f"Job Discovery - {user_name}",
-        first_message=f"Hi {user_name}! I'm here to help you find the perfect job. Let's talk about what you're looking for. What kind of role interests you most right now?",
+        first_message=first_message,
         model={
             "provider": "google",
             "model": "gemini-2.0-flash",
@@ -81,29 +75,25 @@ def create_interview_assistant(
     """
     client = get_vapi()
 
-    system_prompt = f"""You are a professional technical interviewer conducting a mock interview.
-
-Position: {job_title}
-Company: {company or 'Not specified'}
-Required Skills: {requirements or 'Not specified'}
-
-Candidate Background:
-- Name: {user_name}
-- Technologies: {', '.join(technologies)}
-- Background: {summary}
-
-Interview Guidelines:
-- Ask 4-5 technical questions related to the required skills
-- Tailor questions to the candidate's actual experience
-- Start with easier questions, gradually increase difficulty
-- Ask follow-up questions based on their answers
-- Be professional, encouraging, and constructive
-- After all questions, give brief feedback on their performance
-- Keep the interview to about 10 minutes"""
+    system_prompt = get_prompt(
+        "interview", "system",
+        user_name=user_name,
+        technologies=", ".join(technologies),
+        summary=summary,
+        job_title=job_title,
+        company=company or "Not specified",
+        requirements=requirements or "Not specified",
+    )
+    first_message = get_prompt(
+        "interview", "first_message",
+        user_name=user_name,
+        job_title=job_title,
+        company_suffix=f" at {company}" if company else "",
+    )
 
     assistant = client.assistants.create(
         name=f"Interview - {user_name} - {job_title}",
-        first_message=f"Hello {user_name}! Welcome to your mock interview for the {job_title} position{f' at {company}' if company else ''}. I'll be asking you some technical questions today. Ready to begin?",
+        first_message=first_message,
         model={
             "provider": "google",
             "model": "gemini-2.0-flash",
@@ -132,7 +122,6 @@ def get_call_transcript(call_id: str) -> dict:
     artifact = call.artifact or {}
     analysis = call.analysis or {}
 
-    # Handle both dict and object access patterns
     def _get(obj, key, default=None):
         if isinstance(obj, dict):
             return obj.get(key, default)

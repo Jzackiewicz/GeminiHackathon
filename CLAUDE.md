@@ -34,6 +34,18 @@ Detailed references for all external services:
 - `docs/google-stitch.md` -- Google Stitch (MCP-based UI/CV generation, HTML-to-PDF)
 - `docs/linkedin-api.md` -- LinkedIn (OAuth limitations, data export parsing)
 
+## LLM Prompts
+
+All LLM prompts live in `backend/prompts.yaml` — **never hardcode prompts in Python code**. Use `services/prompts.py` to load them:
+
+```python
+from services.prompts import get_prompt
+text = get_prompt("profile_analysis", "system")
+text = get_prompt("interview", "system", user_name="Alice", job_title="Backend Dev", ...)
+```
+
+Use `{variable}` placeholders in YAML for runtime substitution. For literal braces in prompts (e.g., JSON examples), double them: `{{` and `}}`.
+
 ## Env Vars
 
 ```
