@@ -1,12 +1,16 @@
 import json
+from pathlib import Path
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent / ".env")
 
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import get_db, init_db
-from auth import hash_password, verify_password, create_access_token, decode_token
-from models import UserCreate, UserOut, Token, ProfileOut, GitHubConnect, JobOfferOut, JobSearchQuery, JobSelectRequest, InterviewOut
+from auth import hash_password, verify_password, create_access_token, decode_token, exchange_github_code, GITHUB_CLIENT_ID
+from models import UserCreate, UserOut, Token, ProfileOut, GitHubConnect, GitHubCallbackRequest, JobOfferOut, JobSearchQuery, JobSelectRequest, InterviewOut
 from scraper import fetch_github_profile, search_justjoinit
 
 
@@ -64,6 +68,46 @@ def login(body: UserCreate):
     if not row or not verify_password(body.password, row["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
     return Token(access_token=create_access_token(row["id"]))
+
+
+@app.get("/api/auth/github/client-id")
+def github_client_id():
+    return {"client_id": GITHUB_CLIENT_ID}
+
+
+@app.post("/api/auth/github/callback", response_model=Token)
+async def github_callback(body: GitHubCallbackRequest):
+    try:
+        gh_user = await exchange_github_code(body.code)
+    except (ValueError, Exception) as e:
+        raise HTTPException(401, str(e))
+    db = get_db()
+    # Check if user exists by github_id
+    row = db.execute("SELECT id FROM users WHERE github_id = ?", (gh_user["github_id"],)).fetchone()
+    if row:
+        user_id = row["id"]
+    else:
+        # Check if email already taken (registered via email/password)
+        row = db.execute("SELECT id FROM users WHERE email = ?", (gh_user["email"],)).fetchone()
+        if row:
+            # Link GitHub to existing account
+            user_id = row["id"]
+            db.execute("UPDATE users SET github_id = ? WHERE id = ?", (gh_user["github_id"], user_id))
+        else:
+            # Create new user
+            db.execute(
+                "INSERT INTO users (email, github_id) VALUES (?, ?)",
+                (gh_user["email"], gh_user["github_id"]),
+            )
+            db.commit()
+            user_id = db.execute("SELECT id FROM users WHERE github_id = ?", (gh_user["github_id"],)).fetchone()["id"]
+            db.execute(
+                "INSERT INTO profiles (user_id, github_username) VALUES (?, ?)",
+                (user_id, gh_user["login"]),
+            )
+        db.commit()
+    db.close()
+    return Token(access_token=create_access_token(user_id))
 
 
 @app.get("/api/auth/me", response_model=UserOut)

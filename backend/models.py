@@ -30,6 +30,10 @@ class GitHubConnect(BaseModel):
     username: str
 
 
+class GitHubCallbackRequest(BaseModel):
+    code: str
+
+
 # --- Jobs ---
 
 class JobOfferOut(BaseModel):

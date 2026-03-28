@@ -30,6 +30,9 @@ export const api = {
     request("/auth/register", { method: "POST", body: JSON.stringify({ email, password }) }),
   login: (email, password) =>
     request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  githubClientId: () => request("/auth/github/client-id"),
+  githubCallback: (code) =>
+    request("/auth/github/callback", { method: "POST", body: JSON.stringify({ code }) }),
   me: () => request("/auth/me"),
   getProfile: () => request("/profile"),
   connectGithub: (username) =>
