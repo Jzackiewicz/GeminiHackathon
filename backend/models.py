@@ -96,3 +96,70 @@ class InterviewOut(BaseModel):
     review: dict | None = None
     score: int | None = None
     created_at: str | None = None
+
+
+# --- JustJoinIT Job Search & Scoring ---
+
+class JJITOfferOut(BaseModel):
+    slug: str
+    title: str
+    company_name: str | None = None
+    required_skills: list[str] = []
+    nice_to_have_skills: list[str] = []
+    experience_level: str | None = None
+    workplace_type: str | None = None
+    working_time: str | None = None
+    salary_display: str | None = None
+    city: str | None = None
+    published_at: str | None = None
+    url: str | None = None
+
+
+class SkillMatchBreakdown(BaseModel):
+    matched: list[str] = []
+    missing: list[str] = []
+    bonus: list[str] = []
+
+
+class ExperienceFit(BaseModel):
+    level_match: str
+    reasoning: str
+
+
+class Suggestion(BaseModel):
+    type: str
+    title: str
+    description: str
+    priority: str = "medium"
+
+
+class ScoredOfferOut(BaseModel):
+    offer: JJITOfferOut
+    overall_score: int
+    skill_match: SkillMatchBreakdown
+    experience_fit: ExperienceFit
+    suggestions: list[Suggestion] = []
+    reasoning: str
+
+
+class OfferDetailOut(BaseModel):
+    offer: JJITOfferOut
+    body_html: str | None = None
+    company_url: str | None = None
+    company_size: str | None = None
+    apply_url: str | None = None
+    languages: list[dict] = []
+    score: ScoredOfferOut | None = None
+
+
+class FetchStatusOut(BaseModel):
+    status: str
+    total_offers: int = 0
+    last_fetched_at: str | None = None
+
+
+class ScoreFilters(BaseModel):
+    experience_levels: list[str] = []
+    skills: list[str] = []
+    workplace_type: str | None = None
+    limit: int = 20
