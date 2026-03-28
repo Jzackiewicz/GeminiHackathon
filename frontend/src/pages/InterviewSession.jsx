@@ -215,6 +215,10 @@ export default function InterviewSession() {
         await api.interviewComplete(interview.id, transcriptRef.current);
       } catch (_) {}
     }
+
+    navigate("/interview/summary", {
+      state: { interviewId: interview?.id, transcript: transcriptRef.current },
+    });
   }
 
   async function handleReview() {

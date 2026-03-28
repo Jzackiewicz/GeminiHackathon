@@ -4,6 +4,7 @@ import GitHubCallback from "./pages/GitHubCallback";
 import Dashboard from "./pages/Dashboard";
 import Interview from "./pages/Interview";
 import InterviewSession from "./pages/InterviewSession";
+import InterviewSummary from "./pages/InterviewSummary";
 import JobDetail from "./pages/JobDetail";
 import Debug from "./pages/Debug";
 
@@ -23,6 +24,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <JobDetail />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/interview/summary"
+        element={
+          <PrivateRoute>
+            <InterviewSummary />
           </PrivateRoute>
         }
       />
