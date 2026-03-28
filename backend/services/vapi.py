@@ -1,5 +1,5 @@
 import os
-from vapi import VapiClient
+from vapi import Vapi as VapiClient
 from services.prompts import get_prompt
 
 _client: VapiClient | None = None
@@ -38,7 +38,7 @@ def create_job_discovery_assistant(
     )
 
     assistant = client.assistants.create(
-        name=f"Job Discovery - {user_name}",
+        name=f"Job Discovery - {user_name}"[:40],
         first_message=first_message,
         model={
             "provider": "google",
@@ -56,7 +56,6 @@ def create_job_discovery_assistant(
             "language": "en",
         },
         max_duration_seconds=600,
-        silence_timeout_seconds=30,
     )
     return assistant.id
 
@@ -92,7 +91,7 @@ def create_interview_assistant(
     )
 
     assistant = client.assistants.create(
-        name=f"Interview - {user_name} - {job_title}",
+        name=f"Interview - {user_name} - {job_title}"[:40],
         first_message=first_message,
         model={
             "provider": "google",
@@ -110,7 +109,6 @@ def create_interview_assistant(
             "language": "en",
         },
         max_duration_seconds=900,
-        silence_timeout_seconds=30,
     )
     return assistant.id
 

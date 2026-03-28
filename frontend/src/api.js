@@ -45,4 +45,13 @@ export const api = {
   startInterview: () => request("/interview/start", { method: "POST" }),
   listInterviews: () => request("/interviews"),
   debugScrape: (username) => request(`/debug/scrape/${encodeURIComponent(username)}`),
+  debugAnalyze: (githubData) =>
+    request("/debug/analyze", { method: "POST", body: JSON.stringify(githubData) }),
+  debugVapiConfig: () => request("/debug/vapi/config"),
+  debugVapiCreateAssistant: (params) =>
+    request("/debug/vapi/assistant", { method: "POST", body: JSON.stringify(params) }),
+  debugVapiDeleteAssistant: (id) =>
+    request(`/debug/vapi/assistant/${id}`, { method: "DELETE" }),
+  debugVapiChat: (assistant_id, messages) =>
+    request("/debug/vapi/chat", { method: "POST", body: JSON.stringify({ assistant_id, messages }) }),
 };

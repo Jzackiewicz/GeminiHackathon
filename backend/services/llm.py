@@ -3,7 +3,7 @@ import os
 from google import genai
 from services.prompts import get_prompt
 
-MODEL = "gemini-3.1-pro-preview"
+MODEL = "gemini-3.1-flash-lite-preview"
 
 _client: genai.Client | None = None
 
