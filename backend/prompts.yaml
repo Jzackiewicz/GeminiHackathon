@@ -282,17 +282,25 @@ interview_configurator:
     Return a JSON object with exactly these fields:
 
     {{
-      "difficulty": "easy | medium | hard | faang",
-      "rationale": "2-3 sentences explaining why you chose this difficulty"
+      "personality": "Professional | Friendly | Tough | Casual",
+      "interview_type": "Technical | Behavioral | System Design | Mixed",
+      "rationale": "2-3 sentences explaining why you chose these settings"
     }}
 
-    Guidelines:
-    - If they have past interviews with low scores, suggest easier difficulty
-    - If they aced past interviews, increase difficulty
-    - If no interview history, base difficulty on their experience level
-    - junior → easy or medium
-    - mid → medium or hard
-    - senior/lead → hard or faang
+    Guidelines for personality (maps to difficulty):
+    - Friendly/Casual = easy difficulty — good for beginners or after low scores
+    - Professional = medium difficulty — balanced, default choice
+    - Tough = hard difficulty — for experienced devs or those who aced past interviews
+    - If they have past interviews with low scores, suggest Friendly
+    - If they aced past interviews, suggest Tough
+    - If no interview history, base on experience level:
+      junior → Friendly or Professional, mid → Professional, senior/lead → Tough
+
+    Guidelines for interview_type:
+    - Technical: for roles focused on coding, algorithms, specific tech stacks
+    - Behavioral: for roles emphasizing leadership, teamwork, communication
+    - System Design: for senior/lead roles or system-heavy positions
+    - Mixed: when the role spans multiple areas or you're unsure
 
 career_advisor:
   system: |

@@ -18,7 +18,7 @@ export default function DashboardLayout({ user, profile, onUpdateProfile, onLogo
           <div className="flex flex-col lg:flex-row gap-5">
             <div className="w-full lg:w-[340px] shrink-0 space-y-3">
               <ProfileSummary profile={profile} onUpdate={onUpdateProfile} />
-              <AddDataSource />
+              <AddDataSource profile={profile} />
             </div>
             <div className="flex-1 min-w-0">
               <ROIActions />

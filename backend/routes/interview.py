@@ -55,6 +55,80 @@ def vapi_config():
     return {"public_key": os.getenv("VAPI_PUBLIC_KEY", "")}
 
 
+@router.post("/auto-configure")
+def auto_configure(user_id: int = Depends(get_current_user)):
+    """Use Gemini to suggest optimal interview settings based on profile + history."""
+    db = get_db()
+    profile = db.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
+    interviews = db.execute(
+        "SELECT job_title, review, score FROM interviews WHERE user_id = ? AND review IS NOT NULL ORDER BY created_at DESC LIMIT 10",
+        (user_id,),
+    ).fetchall()
+    db.close()
+
+    if not profile:
+        raise HTTPException(404, "No profile found")
+
+    # Build profile section
+    profile_parts = []
+    if profile["experience_level"]:
+        profile_parts.append(f"Summary: {profile['summary'] or ''}")
+        profile_parts.append(f"Experience Level: {profile['experience_level']}")
+        profile_parts.append(f"Primary Role: {profile['primary_role'] or ''}")
+        techs = json.loads(profile["technologies"]) if profile["technologies"] else []
+        if techs:
+            tech_strs = [f"{t['name']} ({t.get('proficiency', 'unknown')})" if isinstance(t, dict) else t for t in techs]
+            profile_parts.append(f"Technologies: {', '.join(tech_strs)}")
+        strengths = json.loads(profile["strengths"]) if profile["strengths"] else []
+        if strengths:
+            profile_parts.append(f"Strengths: {', '.join(strengths)}")
+
+    if profile["github_raw"]:
+        try:
+            gh = json.loads(profile["github_raw"])
+            langs = gh.get("languages", {})
+            if langs:
+                top = [f"{l} ({d.get('percent', 0)}%)" for l, d in list(langs.items())[:10]]
+                profile_parts.append(f"GitHub Languages: {', '.join(top)}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    profile_section = "\n".join(profile_parts) if profile_parts else "No profile data available."
+
+    # Build interviews section
+    interviews_parts = []
+    for iv in interviews:
+        review = json.loads(iv["review"]) if iv["review"] else None
+        if not review:
+            continue
+        interviews_parts.append(f"Interview for {iv['job_title'] or 'Unknown'} — Score: {review.get('overall_score', '?')}/10")
+        for w in review.get("weaknesses", []):
+            interviews_parts.append(f"  Weakness: {w.get('area')}")
+        for r in review.get("recommendations", []):
+            interviews_parts.append(f"  Recommendation: {r.get('topic')}")
+
+    interviews_section = "\n".join(interviews_parts) if interviews_parts else "No interview history."
+
+    system = get_prompt("interview_configurator", "system")
+    user_prompt = get_prompt(
+        "interview_configurator", "user",
+        profile_section=profile_section,
+        interviews_section=interviews_section,
+    )
+
+    try:
+        raw = prompt_with_context("", user_prompt, system=system)
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        config = json.loads(cleaned.strip())
+        return {"config": config}
+    except Exception as e:
+        raise HTTPException(500, f"Failed to auto-configure: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Start interview (creates VAPI assistant)
 # ---------------------------------------------------------------------------

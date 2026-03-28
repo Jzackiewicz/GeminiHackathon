@@ -59,6 +59,7 @@ export const api = {
     if (params.limit) q.set("limit", params.limit);
     return request(`/jobs/scored?${q.toString()}`);
   },
+  autoConfigureInterview: () => request("/interviews/auto-configure", { method: "POST" }),
   vapiConfig: () => request("/interviews/vapi-config"),
   startInterview: (settings) =>
     request("/interviews/start", { method: "POST", body: JSON.stringify(settings) }),
