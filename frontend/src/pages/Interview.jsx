@@ -11,11 +11,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   mockPreInterviewTips,
   mockSelectedJobOffer,
-  mockInterviewHistory,
 } from "@/data/mockData";
 
 export default function Interview() {
   const [user, setUser] = useState(null);
+  const [interviews, setInterviews] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +24,10 @@ export default function Interview() {
       navigate("/login");
     });
   }, [navigate]);
+
+  useEffect(() => {
+    api.listInterviews().then(setInterviews).catch(() => {});
+  }, []);
 
   function logout() {
     clearToken();
@@ -65,7 +69,7 @@ export default function Interview() {
 
           {/* History (compact — ~40%) */}
           <div className="flex-[2] min-h-0">
-            <InterviewHistory history={mockInterviewHistory} />
+            <InterviewHistory history={interviews} />
           </div>
         </div>
       </div>

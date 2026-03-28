@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,14 @@ function formatDate(dateStr) {
 }
 
 export default function InterviewHistory({ history }) {
+  const navigate = useNavigate();
+
+  function handleRowClick(item) {
+    navigate("/interview/summary", {
+      state: { interviewId: item.id },
+    });
+  }
+
   return (
     <Card className="border-panel-border shadow-card h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-2 shrink-0">
@@ -35,29 +44,50 @@ export default function InterviewHistory({ history }) {
             <thead>
               <tr className="border-b border-panel-border">
                 <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-5 py-2">Date</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-2 py-2">Type</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-2 py-2">Personality</th>
+                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-2 py-2">Job</th>
+                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-left px-2 py-2">Company</th>
                 <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-center px-2 py-2">Score</th>
-                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-right px-5 py-2">Duration</th>
+                <th className="text-[10px] font-medium text-muted uppercase tracking-wider text-right px-5 py-2">Status</th>
               </tr>
             </thead>
             <tbody>
               {history.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-panel-border last:border-0 hover:bg-background transition-colors"
+                  onClick={() => handleRowClick(item)}
+                  className="border-b border-panel-border last:border-0 hover:bg-background transition-colors cursor-pointer"
                 >
-                  <td className="text-xs text-[#1A1A1A] px-5 py-2.5">{formatDate(item.date)}</td>
-                  <td className="px-2 py-2.5">
-                    <Badge variant="secondary" className="text-[10px]">
-                      {item.type}
-                    </Badge>
+                  <td className="text-xs text-[#1A1A1A] px-5 py-2.5">
+                    {item.created_at ? formatDate(item.created_at) : "—"}
                   </td>
-                  <td className="text-xs text-muted px-2 py-2.5">{item.personality}</td>
+                  <td className="text-xs text-[#1A1A1A] px-2 py-2.5 max-w-[150px] truncate">
+                    {item.job_title || "General"}
+                  </td>
+                  <td className="text-xs text-muted px-2 py-2.5 max-w-[120px] truncate">
+                    {item.company || "—"}
+                  </td>
                   <td className="text-center px-2 py-2.5">
-                    <ScoreCell score={item.score} />
+                    {item.score != null ? (
+                      <ScoreCell score={item.score} />
+                    ) : (
+                      <span className="text-[10px] text-muted">—</span>
+                    )}
                   </td>
-                  <td className="text-xs text-muted text-right px-5 py-2.5">{item.duration}</td>
+                  <td className="text-right px-5 py-2.5">
+                    {item.review ? (
+                      <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-700">
+                        Reviewed
+                      </Badge>
+                    ) : item.transcript?.length > 0 ? (
+                      <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700">
+                        Completed
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Started
+                      </Badge>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
