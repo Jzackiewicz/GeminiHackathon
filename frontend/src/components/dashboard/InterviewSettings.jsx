@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Settings, Phone, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -9,6 +10,7 @@ export default function InterviewSettings() {
   const [personality, setPersonality] = useState("Professional");
   const [type, setType] = useState("Technical");
   const [jobContext, setJobContext] = useState("");
+  const navigate = useNavigate();
 
   return (
     <Card className="border-panel-border shadow-card h-full flex flex-col">
@@ -85,6 +87,7 @@ export default function InterviewSettings() {
             Generate
           </button>
           <button
+            onClick={() => navigate("/interview/session")}
             className="flex-[2] flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             <Phone className="w-4 h-4" />
