@@ -8,14 +8,12 @@ import InterviewSettings from "../components/dashboard/InterviewSettings";
 import InterviewAnalysis from "../components/dashboard/InterviewAnalysis";
 import InterviewHistory from "../components/dashboard/InterviewHistory";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  mockPreInterviewTips,
-  mockSelectedJobOffer,
-} from "@/data/mockData";
+import { mockPreInterviewTips } from "@/data/mockData";
 
 export default function Interview() {
   const [user, setUser] = useState(null);
   const [interviews, setInterviews] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +25,7 @@ export default function Interview() {
 
   useEffect(() => {
     api.listInterviews().then(setInterviews).catch(() => {});
+    api.getSelectedJob().then((r) => setSelectedJob(r.job)).catch(() => {});
   }, []);
 
   function logout() {
@@ -46,7 +45,7 @@ export default function Interview() {
           <Card className="border-panel-border shadow-card shrink-0">
             <CardContent className="p-5 flex gap-5">
               <div className="flex-1 min-w-0">
-                <JobOfferSummary offer={mockSelectedJobOffer} />
+                <JobOfferSummary offer={selectedJob} />
               </div>
               <div className="border-l border-panel-border pl-5 flex-1 min-w-0">
                 <PreInterviewTips tips={mockPreInterviewTips} />
@@ -56,7 +55,7 @@ export default function Interview() {
 
           {/* Interview Settings (takes remaining space — main feature) */}
           <div className="flex-1 min-h-0">
-            <InterviewSettings />
+            <InterviewSettings selectedJob={selectedJob} />
           </div>
         </div>
 

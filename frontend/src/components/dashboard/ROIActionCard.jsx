@@ -4,32 +4,35 @@ import {
   Eye,
   TrendingUp,
   GitBranch,
+  Users,
+  MessageSquare,
+  Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const iconMap = {
-  BookOpen,
-  Code,
-  Eye,
-  TrendingUp,
-  GitBranch,
+const typeConfig = {
+  skill_up: { label: "Skill Up", icon: BookOpen },
+  visibility: { label: "Visibility", icon: Eye },
+  project: { label: "Project", icon: Code },
+  networking: { label: "Networking", icon: Users },
+  interview_prep: { label: "Interview Prep", icon: MessageSquare },
+  career_move: { label: "Career Move", icon: Briefcase },
+  learning: { label: "Learning", icon: GraduationCap },
+  open_source: { label: "Open Source", icon: GitBranch },
 };
 
-const priorityStyles = {
-  high: "bg-danger-light text-red-700",
+const difficultyStyles = {
+  hard: "bg-danger-light text-red-700",
   medium: "bg-warning-light text-amber-700",
-  low: "bg-accent-light text-accent",
-};
-
-const typeLabels = {
-  "skill-up": "Skill Up",
-  project: "Project",
-  visibility: "Visibility",
+  easy: "bg-accent-light text-accent",
 };
 
 export default function ROIActionCard({ action }) {
-  const Icon = iconMap[action.icon] || BookOpen;
+  const config = typeConfig[action.type] || { label: action.type, icon: TrendingUp };
+  const Icon = config.icon;
+  const difficulty = action.difficulty || "medium";
 
   return (
     <Card className="border-panel-border shadow-card">
@@ -43,13 +46,13 @@ export default function ROIActionCard({ action }) {
               variant="secondary"
               className="text-[10px] font-medium"
             >
-              {typeLabels[action.type]}
+              {config.label}
             </Badge>
             <Badge
               variant="secondary"
-              className={`text-[10px] font-medium ${priorityStyles[action.priority]}`}
+              className={`text-[10px] font-medium ${difficultyStyles[difficulty] || ""}`}
             >
-              {action.priority}
+              {difficulty}
             </Badge>
           </div>
         </div>

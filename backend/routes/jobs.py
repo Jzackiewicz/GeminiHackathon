@@ -62,6 +62,33 @@ def select_job(body: JobSelectRequest, user_id: int = Depends(get_current_user))
     return {"ok": True}
 
 
+@router.get("/selected")
+def get_selected_job(user_id: int = Depends(get_current_user)):
+    db = get_db()
+    row = db.execute(
+        "SELECT * FROM job_offers WHERE user_id = ? AND selected = 1 ORDER BY created_at DESC LIMIT 1",
+        (user_id,),
+    ).fetchone()
+    db.close()
+    if not row:
+        return {"job": None}
+    reqs = row["requirements"] or "[]"
+    try:
+        tags = json.loads(reqs) if reqs.startswith("[") else [reqs]
+    except (json.JSONDecodeError, TypeError):
+        tags = []
+    return {
+        "job": {
+            "id": row["id"],
+            "title": row["title"],
+            "company": row["company"],
+            "url": row["url"],
+            "description": row["description"],
+            "tags": tags if isinstance(tags, list) else [],
+        }
+    }
+
+
 @router.get("/list", response_model=list[JobOfferOut])
 def list_jobs(user_id: int = Depends(get_current_user)):
     db = get_db()

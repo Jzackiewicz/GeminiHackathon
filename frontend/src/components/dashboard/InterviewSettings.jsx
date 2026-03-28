@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Settings, Phone, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const personalities = ["Professional", "Friendly", "Tough", "Casual"];
 const interviewTypes = ["Technical", "Behavioral", "System Design", "Mixed"];
 
-export default function InterviewSettings() {
+export default function InterviewSettings({ selectedJob }) {
   const [personality, setPersonality] = useState("Professional");
   const [type, setType] = useState("Technical");
   const [jobContext, setJobContext] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (selectedJob && !jobContext) {
+      const parts = [];
+      if (selectedJob.title) parts.push(selectedJob.title);
+      if (selectedJob.company) parts.push(`at ${selectedJob.company}`);
+      const tags = selectedJob.tags || [];
+      if (tags.length > 0) parts.push(`\nSkills: ${tags.join(", ")}`);
+      if (selectedJob.description) parts.push(`\n${selectedJob.description}`);
+      setJobContext(parts.join(" "));
+    }
+  }, [selectedJob]);
 
   return (
     <Card className="border-panel-border shadow-card h-full flex flex-col">

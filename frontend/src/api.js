@@ -43,9 +43,11 @@ export const api = {
   saveDebugData: (github_data, analysis) =>
     request("/profile/save-debug", { method: "POST", body: JSON.stringify({ github_data, analysis }) }),
   getCareerSuggestions: () => request("/profile/career-suggestions"),
+  generateCareerSuggestions: () => request("/profile/career-suggestions/generate", { method: "POST" }),
   searchJobs: (keywords = [], remote = true) =>
     request("/jobs/search", { method: "POST", body: JSON.stringify({ keywords, remote }) }),
   listJobs: () => request("/jobs"),
+  getSelectedJob: () => request("/jobs/selected"),
   selectJob: (job_offer_id) =>
     request("/jobs/select", { method: "POST", body: JSON.stringify({ job_offer_id }) }),
   vapiConfig: () => request("/interviews/vapi-config"),

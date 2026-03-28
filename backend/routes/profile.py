@@ -9,7 +9,7 @@ from dependencies import get_current_user
 from pydantic import BaseModel
 from models import ProfileOut, TechnologyDetail, NotableProject, GitHubConnect
 from services.scraper import fetch_github_profile, deep_scrape_github
-from services.llm import analyze_github_profile
+from services.llm import analyze_github_profile, prompt_with_context
 from services.prompts import get_prompt
 
 router = APIRouter(prefix="/api/profile")
@@ -139,6 +139,101 @@ def get_career_suggestions(user_id: int = Depends(get_current_user)):
     if not row or not row["career_suggestions"]:
         return {"suggestions": None}
     return {"suggestions": json.loads(row["career_suggestions"])}
+
+
+@router.post("/career-suggestions/generate")
+def generate_career_suggestions(user_id: int = Depends(get_current_user)):
+    """Generate career suggestions from stored profile + interview data."""
+    db = get_db()
+    profile = db.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
+    interviews = db.execute(
+        "SELECT job_title, company, review, score FROM interviews WHERE user_id = ? AND review IS NOT NULL ORDER BY created_at DESC LIMIT 10",
+        (user_id,),
+    ).fetchall()
+    db.close()
+
+    if not profile:
+        raise HTTPException(404, "No profile found")
+
+    # Build profile section
+    profile_parts = []
+    if profile["experience_level"]:
+        profile_parts.append(f"Summary: {profile['summary'] or ''}")
+        profile_parts.append(f"Experience Level: {profile['experience_level']}")
+        profile_parts.append(f"Primary Role: {profile['primary_role'] or ''}")
+        techs = json.loads(profile["technologies"]) if profile["technologies"] else []
+        if techs:
+            tech_strs = [f"{t['name']} ({t.get('proficiency', 'unknown')})" if isinstance(t, dict) else t for t in techs]
+            profile_parts.append(f"Technologies: {', '.join(tech_strs)}")
+        strengths = json.loads(profile["strengths"]) if profile["strengths"] else []
+        if strengths:
+            profile_parts.append(f"Strengths: {', '.join(strengths)}")
+        projects = json.loads(profile["notable_projects"]) if profile["notable_projects"] else []
+        if projects:
+            profile_parts.append("Notable Projects:")
+            for p in projects:
+                profile_parts.append(f"  - {p.get('name')}: {p.get('description', '')} [{', '.join(p.get('technologies', []))}]")
+
+    if profile["github_raw"]:
+        gh = json.loads(profile["github_raw"])
+        langs = gh.get("languages", {})
+        if langs:
+            top = [f"{l} ({d.get('percent', 0)}%)" for l, d in list(langs.items())[:10]]
+            profile_parts.append(f"GitHub Languages: {', '.join(top)}")
+        profile_parts.append(f"Original repos: {gh.get('original_repos_count', '?')}")
+        profile_parts.append(f"Account age: since {gh.get('account_created', '?')[:4]}")
+        topics = gh.get("topics", {})
+        if topics:
+            profile_parts.append(f"Topics: {', '.join(list(topics.keys())[:15])}")
+
+    profile_section = "Developer Profile:\n" + "\n".join(profile_parts) if profile_parts else "No profile data available."
+
+    # Build interviews section
+    interviews_parts = []
+    for iv in interviews:
+        review = json.loads(iv["review"]) if iv["review"] else None
+        if not review:
+            continue
+        interviews_parts.append(f"Interview for {iv['job_title'] or 'Unknown'} — Score: {review.get('overall_score', '?')}/10, Recommendation: {review.get('hiring_recommendation', '?')}")
+        interviews_parts.append(f"  Assessment: {review.get('overall_assessment', '')}")
+        for w in review.get("weaknesses", []):
+            interviews_parts.append(f"  Weakness: {w.get('area')} — {w.get('detail')}")
+        for m in review.get("missed_opportunities", []):
+            interviews_parts.append(f"  Missed: {m.get('topic')} — {m.get('suggestion')}")
+        for r in review.get("recommendations", []):
+            interviews_parts.append(f"  Recommendation: {r.get('topic')} — {r.get('action')}")
+
+    interviews_section = "Past Interview Results:\n" + "\n".join(interviews_parts) if interviews_parts else "No interview data available."
+
+    system = get_prompt("career_advisor", "system")
+    user_prompt = get_prompt(
+        "career_advisor", "user",
+        profile_section=profile_section,
+        interviews_section=interviews_section,
+        additional_section="Additional data sources: None connected yet (LinkedIn, etc.)",
+    )
+
+    try:
+        raw = prompt_with_context("", user_prompt, system=system)
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        suggestions = json.loads(cleaned.strip())
+
+        # Persist
+        db = get_db()
+        db.execute(
+            "UPDATE profiles SET career_suggestions = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+            (json.dumps(suggestions), user_id),
+        )
+        db.commit()
+        db.close()
+
+        return {"suggestions": suggestions}
+    except Exception as e:
+        raise HTTPException(500, f"Failed to generate suggestions: {e}")
 
 
 @router.get("/github-raw")
