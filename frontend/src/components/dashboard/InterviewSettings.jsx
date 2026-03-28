@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, Phone, Sparkles } from "lucide-react";
+import { Settings, Phone, Sparkles, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "@/api";
 
 const personalities = ["Professional", "Friendly", "Tough", "Casual"];
 const interviewTypes = ["Technical", "Behavioral", "System Design", "Mixed"];
@@ -10,6 +11,8 @@ export default function InterviewSettings({ selectedJob }) {
   const [personality, setPersonality] = useState("Professional");
   const [type, setType] = useState("Technical");
   const [jobContext, setJobContext] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [rationale, setRationale] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +26,19 @@ export default function InterviewSettings({ selectedJob }) {
       setJobContext(parts.join(" "));
     }
   }, [selectedJob]);
+
+  async function autoGenerate() {
+    setGenerating(true);
+    setRationale("");
+    try {
+      const resp = await api.autoConfigureInterview();
+      const c = resp.config;
+      if (c.personality && personalities.includes(c.personality)) setPersonality(c.personality);
+      if (c.interview_type && interviewTypes.includes(c.interview_type)) setType(c.interview_type);
+      if (c.rationale) setRationale(c.rationale);
+    } catch {}
+    setGenerating(false);
+  }
 
   return (
     <Card className="border-panel-border shadow-card h-full flex flex-col">
@@ -90,13 +106,24 @@ export default function InterviewSettings({ selectedJob }) {
           />
         </div>
 
+        {/* Rationale */}
+        {rationale && (
+          <p className="text-xs text-muted italic px-1">{rationale}</p>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <button
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-background text-[#1A1A1A] text-sm font-medium rounded-full border border-panel-border hover:bg-[#EAEAE5] hover:-translate-y-0.5 transition-all cursor-pointer"
+            onClick={autoGenerate}
+            disabled={generating}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-background text-[#1A1A1A] text-sm font-medium rounded-full border border-panel-border hover:bg-[#EAEAE5] hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
           >
-            <Sparkles className="w-4 h-4" />
-            Generate
+            {generating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            {generating ? "Generating..." : "Generate"}
           </button>
           <button
             onClick={() => navigate("/interview/session", { state: { personality, interview_type: type, job_context: jobContext, job_slug: selectedJob?.slug } })}
