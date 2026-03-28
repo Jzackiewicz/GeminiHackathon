@@ -22,5 +22,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DB_PATH=/app/data/interview_ai.db
-  volumes:
-    backend_data:
+
+volumes:
+  backend_data:
