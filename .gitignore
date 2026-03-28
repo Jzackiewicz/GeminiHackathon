@@ -222,6 +222,9 @@ package-lock.json
 
 # SQLite (local dev DBs)
 *.db
+*.db-shm
+*.db-wal
+*.db-journal
 
 # OS
 .DS_Store
