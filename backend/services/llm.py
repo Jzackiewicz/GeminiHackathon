@@ -55,3 +55,25 @@ def analyze_github_profile(github_data: dict) -> dict:
     cleaned = cleaned.strip()
 
     return json.loads(cleaned)
+
+
+def score_offers_against_profile(profile: dict, offers: list[dict]) -> list[dict]:
+    """Use Gemini to score a batch of job offers against a user profile.
+
+    Returns a list of score dicts, one per offer.
+    """
+    system = get_prompt("offer_scoring", "system")
+    user_prompt = get_prompt("offer_scoring", "user")
+
+    context = json.dumps({"profile": profile, "offers": offers}, indent=2, default=str)
+
+    raw = prompt_with_context(context, user_prompt, system=system)
+
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[1]
+    if cleaned.endswith("```"):
+        cleaned = cleaned.rsplit("```", 1)[0]
+    cleaned = cleaned.strip()
+
+    return json.loads(cleaned)

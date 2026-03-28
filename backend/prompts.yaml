@@ -326,3 +326,58 @@ career_advisor:
     - Prioritize suggestions that would have the most impact on employability
     - Be specific: name actual technologies, projects, or skills from the profile
     - If data sources are missing (e.g., no LinkedIn), suggest connecting them
+
+offer_scoring:
+  system: |
+    You are an expert career advisor and technical recruiter.
+    You evaluate how well job offers match a candidate's profile.
+    You must respond with valid JSON only — no markdown, no commentary.
+
+  user: |
+    Score each job offer against this candidate's profile.
+
+    For each offer, produce a JSON object with:
+    {{
+      "slug": "the offer slug",
+      "overall_score": 0-100,
+      "skill_match": {{
+        "matched": ["skills the candidate has that match the offer"],
+        "missing": ["required skills the candidate lacks"],
+        "bonus": ["candidate skills valuable for this role but not explicitly listed"]
+      }},
+      "experience_fit": {{
+        "level_match": "exact | above | below",
+        "reasoning": "brief explanation"
+      }},
+      "suggestions": [
+        {{
+          "type": "skill-up | project | certification | visibility",
+          "title": "short actionable title",
+          "description": "1-2 sentence description of what to do",
+          "priority": "high | medium | low"
+        }}
+      ],
+      "reasoning": "1-2 sentence summary of why this score"
+    }}
+
+    Return a JSON array of these objects, one per offer.
+
+    Scoring guidelines:
+    - 90-100: Nearly perfect match — candidate has almost all required skills at the right level
+    - 75-89: Strong match — most skills present, minor gaps easily filled
+    - 60-74: Moderate match — solid foundation but meaningful gaps
+    - 40-59: Partial match — some relevant skills but significant gaps
+    - 0-39: Poor match — few overlapping skills or wrong experience level
+
+    Be generous with fuzzy matching:
+    - "React" matches "ReactJS", "React.js"
+    - "Spring Boot" implies "Java" proficiency
+    - "AWS" is relevant for "cloud" requirements
+    - Python experience is relevant for "Django" or "FastAPI" roles
+
+    Consider the FULL profile: GitHub technologies with proficiency levels,
+    LinkedIn job history (duration and seniority imply depth), certifications,
+    and notable projects. A candidate who has used a technology professionally
+    for 2+ years (from LinkedIn) is stronger than one who only has hobby projects.
+
+    Limit suggestions to 2-3 per offer, focusing on the highest-impact actions.
