@@ -2,16 +2,20 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, clearToken } from "../api";
 import TopBar from "../components/dashboard/TopBar";
-import ProfileSummary from "../components/dashboard/ProfileSummary";
-import AddDataSource from "../components/dashboard/AddDataSource";
-import ROIActions from "../components/dashboard/ROIActions";
+import PreInterviewTips from "../components/dashboard/PreInterviewTips";
+import JobOfferSummary from "../components/dashboard/JobOfferSummary";
 import InterviewSettings from "../components/dashboard/InterviewSettings";
-import InterviewCall from "../components/dashboard/InterviewCall";
-import InterviewScore from "../components/dashboard/InterviewScore";
+import InterviewAnalysis from "../components/dashboard/InterviewAnalysis";
+import InterviewHistory from "../components/dashboard/InterviewHistory";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  mockPreInterviewTips,
+  mockSelectedJobOffer,
+  mockInterviewHistory,
+} from "@/data/mockData";
 
 export default function Interview() {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,7 +23,6 @@ export default function Interview() {
       clearToken();
       navigate("/login");
     });
-    api.getProfile().then(setProfile).catch(() => {});
   }, [navigate]);
 
   function logout() {
@@ -31,40 +34,40 @@ export default function Interview() {
     <div className="h-screen flex flex-col bg-background">
       <TopBar user={user} onLogout={logout} />
 
-      <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* Main content */}
-        <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar p-4 lg:p-6 space-y-5">
-          {/* Top row: Profile + AI Suggestions */}
-          <div className="flex flex-col lg:flex-row gap-5">
-            <div className="w-full lg:w-[340px] shrink-0 space-y-3">
-              <ProfileSummary profile={profile} onUpdate={setProfile} />
-              <AddDataSource />
-            </div>
-            <div className="flex-1 min-w-0">
-              <ROIActions />
-            </div>
-          </div>
+      {/* Two-column layout — each column manages its own vertical split */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-y-auto lg:overflow-hidden">
+        {/* Left column: ~40% width */}
+        <div className="w-full lg:w-[40%] shrink-0 flex flex-col gap-4 min-h-0">
+          {/* Job Offer (left) + Tips (right) side by side */}
+          <Card className="border-panel-border shadow-card shrink-0">
+            <CardContent className="p-5 flex gap-5">
+              <div className="flex-1 min-w-0">
+                <JobOfferSummary offer={mockSelectedJobOffer} />
+              </div>
+              <div className="border-l border-panel-border pl-5 flex-1 min-w-0">
+                <PreInterviewTips tips={mockPreInterviewTips} />
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Bottom row: Settings + Call Area */}
-          <div className="flex flex-col lg:flex-row gap-5">
-            <div className="w-full lg:w-[340px] shrink-0">
-              <InterviewSettings />
-            </div>
-            <div className="flex-1 min-w-0">
-              <InterviewCall />
-            </div>
+          {/* Interview Settings (takes remaining space — main feature) */}
+          <div className="flex-1 min-h-0">
+            <InterviewSettings />
           </div>
         </div>
 
-        {/* Right sidebar: Score / Results */}
-        <div className="hidden lg:block w-[300px] shrink-0 border-l border-[#E8E8E3] p-4 lg:p-6 overflow-y-auto custom-scrollbar">
-          <InterviewScore />
-        </div>
-      </div>
+        {/* Right column: ~60% width */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4 min-h-0">
+          {/* Analysis (takes more height — ~60%) */}
+          <div className="flex-[3] min-h-0">
+            <InterviewAnalysis />
+          </div>
 
-      {/* Mobile score */}
-      <div className="lg:hidden p-4">
-        <InterviewScore />
+          {/* History (compact — ~40%) */}
+          <div className="flex-[2] min-h-0">
+            <InterviewHistory history={mockInterviewHistory} />
+          </div>
+        </div>
       </div>
     </div>
   );

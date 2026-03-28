@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, Phone, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const personalities = ["Professional", "Friendly", "Tough", "Casual"];
@@ -18,7 +18,7 @@ export default function InterviewSettings() {
           Interview Settings
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 flex-1">
+      <CardContent className="space-y-4 flex-1 flex flex-col">
         {/* Personality */}
         <div>
           <label className="text-xs font-medium text-muted uppercase tracking-wider mb-2 block">
@@ -63,8 +63,8 @@ export default function InterviewSettings() {
           </div>
         </div>
 
-        {/* Job Offer / Project */}
-        <div>
+        {/* Job Offer / Project Context */}
+        <div className="flex-1 flex flex-col">
           <label className="text-xs font-medium text-muted uppercase tracking-wider mb-1.5 block">
             Job Offer / Project Context
           </label>
@@ -72,9 +72,24 @@ export default function InterviewSettings() {
             value={jobContext}
             onChange={(e) => setJobContext(e.target.value)}
             placeholder="Paste a job description or describe the project..."
-            rows={3}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-panel-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition resize-none"
+            className="w-full flex-1 min-h-[80px] px-3 py-2 rounded-lg bg-background border border-panel-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition resize-none"
           />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <button
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-background text-[#1A1A1A] text-sm font-medium rounded-full border border-panel-border hover:bg-[#EAEAE5] hover:-translate-y-0.5 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4" />
+            Generate
+          </button>
+          <button
+            className="flex-[2] flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-full hover:bg-[#2A2A2A] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+          >
+            <Phone className="w-4 h-4" />
+            Start Interview
+          </button>
         </div>
       </CardContent>
     </Card>

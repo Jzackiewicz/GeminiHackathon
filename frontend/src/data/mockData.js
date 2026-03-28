@@ -138,6 +138,45 @@ export const mockJobOffers = [
   },
 ];
 
+export const mockPreInterviewTips = [
+  "Research the company's recent projects and tech blog posts",
+  "Prepare 2–3 thoughtful questions to ask the interviewer",
+  "Review the job description and match requirements to your experience",
+  "Practice the STAR method for behavioral questions",
+  "Test your microphone and internet connection before starting",
+  "Keep a notepad ready for jotting down key points",
+];
+
+export const mockSelectedJobOffer = mockJobOffers[0];
+
+export const mockInterviewHistory = [
+  { id: 1, jobOfferId: 1, date: "2026-03-27", score: 72, personality: "Professional", type: "Technical", duration: "24 min" },
+  { id: 2, jobOfferId: 1, date: "2026-03-25", score: 65, personality: "Tough", type: "Behavioral", duration: "18 min" },
+  { id: 3, jobOfferId: 1, date: "2026-03-22", score: 58, personality: "Friendly", type: "System Design", duration: "31 min" },
+  { id: 4, jobOfferId: 1, date: "2026-03-20", score: 81, personality: "Professional", type: "Mixed", duration: "27 min" },
+];
+
+export const mockLastAnalysis = {
+  overall: 72,
+  date: "2026-03-27",
+  good: [
+    "Strong understanding of React component lifecycle",
+    "Clear communication of system design trade-offs",
+    "Good use of technical vocabulary",
+  ],
+  bad: [
+    "Could improve on time complexity analysis",
+    "Missed edge case in the coding question",
+  ],
+  suggestions: [
+    "Practice LeetCode medium-difficulty array problems",
+    "Review common system design patterns (caching, load balancing)",
+    "Work on structuring answers with the STAR framework",
+  ],
+  summary:
+    "Solid technical interview performance. Demonstrated strong React and frontend knowledge. Could improve on algorithmic thinking and edge case handling.",
+};
+
 export const applicationStatuses = {
   applied: { label: "Applied", color: "bg-accent-light text-accent" },
   interview: { label: "Interview", color: "bg-warning-light text-amber-700" },

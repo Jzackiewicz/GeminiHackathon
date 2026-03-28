@@ -1,5 +1,6 @@
 import { Trophy, ThumbsUp, ThumbsDown, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ScoreRing from "./ScoreRing";
 
 const mockScore = {
   overall: 72,
@@ -15,39 +16,6 @@ const mockScore = {
   summary:
     "Solid technical interview performance. Demonstrated strong React and frontend knowledge. Could improve on algorithmic thinking and edge case handling. Recommended to practice more LeetCode-style problems before the real interview.",
 };
-
-function ScoreRing({ score }) {
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? "#10B981" : score >= 60 ? "#F59E0B" : "#EF4444";
-
-  return (
-    <div className="relative w-28 h-28 mx-auto">
-      <svg className="w-28 h-28 -rotate-90" viewBox="0 0 96 96">
-        <circle cx="48" cy="48" r={radius} fill="none" stroke="#E8E8E3" strokeWidth="6" />
-        <circle
-          cx="48"
-          cy="48"
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold" style={{ color }}>
-          {score}
-        </span>
-        <span className="text-[10px] text-muted uppercase tracking-wider">Score</span>
-      </div>
-    </div>
-  );
-}
 
 export default function InterviewScore() {
   const hasScore = true; // Toggle to false to show empty state
