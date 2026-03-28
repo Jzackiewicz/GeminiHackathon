@@ -8,11 +8,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import init_db
-from routes import auth, profile, jobs, interview
+from routes import auth, profile, jobs, interview, debug
+from services import logstream
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logstream.setup()
     init_db()
     yield
 
@@ -31,6 +33,7 @@ app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(jobs.router)
 app.include_router(interview.router)
+app.include_router(debug.router)
 
 
 @app.get("/api/health")

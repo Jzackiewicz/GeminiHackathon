@@ -44,4 +44,5 @@ export const api = {
     request("/jobs/select", { method: "POST", body: JSON.stringify({ job_offer_id }) }),
   startInterview: () => request("/interview/start", { method: "POST" }),
   listInterviews: () => request("/interviews"),
+  debugScrape: (username) => request(`/debug/scrape/${encodeURIComponent(username)}`),
 };

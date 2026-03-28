@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import GitHubCallback from "./pages/GitHubCallback";
 import Dashboard from "./pages/Dashboard";
+import Debug from "./pages/Debug";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -13,6 +14,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/auth/github/callback" element={<GitHubCallback />} />
+      <Route path="/debug" element={<Debug />} />
       <Route
         path="/*"
         element={
