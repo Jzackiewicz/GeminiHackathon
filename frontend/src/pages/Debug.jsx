@@ -594,6 +594,19 @@ function StitchCV({ analysis, githubData }) {
   const [company, setCompany] = useState("");
   const [requirements, setRequirements] = useState("");
   const [autoFilled, setAutoFilled] = useState(false);
+  const [mockJobs, setMockJobs] = useState([]);
+  const [selectedJobId, setSelectedJobId] = useState(null);
+
+  useEffect(() => {
+    api.debugMockJobs().then((r) => setMockJobs(r.jobs || [])).catch(() => {});
+  }, []);
+
+  function selectJob(job) {
+    setSelectedJobId(job.id);
+    setJobTitle(job.title);
+    setCompany(job.company);
+    setRequirements(job.requirements);
+  }
 
   const [generating, setGenerating] = useState(false);
   const [jobId, setJobId] = useState(null);
@@ -733,6 +746,30 @@ function StitchCV({ analysis, githubData }) {
             Takes ~2 minutes.
           </p>
 
+          {mockJobs.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs text-gray-500">Tailor CV for a job offer (or fill manually below):</span>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {mockJobs.map((job) => (
+                  <button
+                    key={job.id}
+                    onClick={() => selectJob(job)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition ${
+                      selectedJobId === job.id
+                        ? "bg-indigo-600/20 border border-indigo-500"
+                        : "bg-gray-800 hover:bg-gray-750"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-gray-200">{job.title}</span>
+                      <span className="text-gray-500">{job.company}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2">
             <input
               value={jobTitle}
@@ -833,6 +870,13 @@ function VapiDebug({ analysis, githubData }) {
   const [difficulty, setDifficulty] = useState("medium");
   const [interviewType, setInterviewType] = useState("technical");
   const [autoFilled, setAutoFilled] = useState(false);
+  const [mockJobs, setMockJobs] = useState([]);
+  const [selectedJobId, setSelectedJobId] = useState(null);
+
+  // Load mock jobs
+  useEffect(() => {
+    api.debugMockJobs().then((r) => setMockJobs(r.jobs || [])).catch(() => {});
+  }, []);
 
   // Auto-fill from Gemini analysis
   useEffect(() => {
@@ -843,7 +887,6 @@ function VapiDebug({ analysis, githubData }) {
     if (techs) setTechnologies(techs);
     if (analysis.summary) setSummary(analysis.summary);
     if (analysis.primary_role) setJobTitle(analysis.primary_role);
-    // Build requirements from top proficiency techs
     const topTechs = (analysis.technologies || [])
       .filter((t) => t.proficiency === "advanced" || t.proficiency === "expert")
       .map((t) => t.name)
@@ -851,6 +894,13 @@ function VapiDebug({ analysis, githubData }) {
     if (topTechs) setRequirements(topTechs);
     setAutoFilled(true);
   }, [analysis, githubData]);
+
+  function selectJob(job) {
+    setSelectedJobId(job.id);
+    setJobTitle(job.title);
+    setCompany(job.company);
+    setRequirements(job.requirements);
+  }
 
   const [assistantId, setAssistantId] = useState(null);
   const [callActive, setCallActive] = useState(false);
@@ -1098,6 +1148,36 @@ function VapiDebug({ analysis, githubData }) {
                 ))}
               </div>
             </>
+          )}
+
+          {/* Job offer selector */}
+          {mode === "interview" && mockJobs.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs text-gray-500">Select a job offer (or fill manually below):</span>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {mockJobs.map((job) => (
+                  <button
+                    key={job.id}
+                    onClick={() => selectJob(job)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition ${
+                      selectedJobId === job.id
+                        ? "bg-blue-600/20 border border-blue-500"
+                        : "bg-gray-800 hover:bg-gray-750"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-gray-200">{job.title}</span>
+                      <span className="text-gray-500">{job.company}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-gray-500">
+                      <span>{job.location}</span>
+                      <span>·</span>
+                      <span>{job.salary}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           <div className="grid grid-cols-2 gap-2">

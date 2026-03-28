@@ -67,6 +67,7 @@ export const api = {
     request("/debug/cv/preview-prompt", { method: "POST", body: JSON.stringify(params) }),
   debugCareerAdvise: (params) =>
     request("/debug/career/advise", { method: "POST", body: JSON.stringify(params) }),
+  debugMockJobs: () => request("/debug/jobs/mock"),
   debugCVToPdf: async (html) => {
     const res = await fetch(`${API_BASE}/debug/cv/pdf`, {
       method: "POST",

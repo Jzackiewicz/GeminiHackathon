@@ -237,7 +237,16 @@ cv_generation:
     Notable Projects: {projects}
 
     This CV is tailored for a {job_title} position at {company}.
-    Emphasize these skills and requirements: {requirements}.
+    Job requirements: {requirements}.
+
+    IMPORTANT — Tailoring strategy:
+    - The candidate has their own skills (listed above). The job has its own requirements.
+    - Identify where the candidate's skills OVERLAP with the job requirements — these go first and get the most prominence.
+    - For job requirements the candidate doesn't have, omit them — don't fabricate skills.
+    - For candidate skills not in the requirements but still impressive, include them in a secondary section.
+    - Reframe the professional summary to position the candidate as a strong fit for THIS specific role.
+    - Choose which projects to highlight based on relevance to the job requirements.
+    - Order skills by relevance to the job, not alphabetically.
 
     Design requirements:
     - Modern, clean, professional single-page layout

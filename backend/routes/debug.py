@@ -69,6 +69,61 @@ async def debug_analyze(body: dict):
         return {"error": str(e)}
 
 
+MOCK_JOB_OFFERS = [
+    {
+        "id": "mock-1",
+        "title": "Senior Backend Developer",
+        "company": "DataFlow Inc.",
+        "location": "Remote",
+        "salary": "$120k-$160k",
+        "requirements": "Python, FastAPI, PostgreSQL, Redis, Docker, AWS",
+        "description": "Build and maintain high-throughput data pipelines and REST APIs serving 10M+ requests/day. Strong focus on performance optimization and system reliability.",
+    },
+    {
+        "id": "mock-2",
+        "title": "Full-Stack Engineer",
+        "company": "StartupXYZ",
+        "location": "Berlin (Hybrid)",
+        "salary": "€70k-€90k",
+        "requirements": "TypeScript, React, Node.js, PostgreSQL, GraphQL",
+        "description": "Join a 10-person team building a B2B SaaS platform. You'll own features end-to-end from database schema to UI components.",
+    },
+    {
+        "id": "mock-3",
+        "title": "Platform Engineer",
+        "company": "CloudScale",
+        "location": "Remote (EU)",
+        "salary": "€90k-€120k",
+        "requirements": "Go, Kubernetes, Terraform, AWS/GCP, CI/CD, Prometheus",
+        "description": "Design and operate the infrastructure platform for 50+ microservices. Focus on developer experience, reliability, and cost optimization.",
+    },
+    {
+        "id": "mock-4",
+        "title": "ML Engineer",
+        "company": "AI Solutions Ltd.",
+        "location": "London",
+        "salary": "£80k-£110k",
+        "requirements": "Python, PyTorch, MLflow, Docker, SQL, REST APIs",
+        "description": "Productionize ML models for NLP and recommendation systems. Bridge the gap between research prototypes and scalable production services.",
+    },
+    {
+        "id": "mock-5",
+        "title": "Frontend Developer",
+        "company": "DesignCraft",
+        "location": "Remote",
+        "salary": "$90k-$120k",
+        "requirements": "React, TypeScript, Tailwind CSS, Next.js, Figma",
+        "description": "Build pixel-perfect, accessible UI components for a design system used by 200+ enterprise clients. Strong focus on performance and a11y.",
+    },
+]
+
+
+@router.get("/jobs/mock")
+def list_mock_jobs():
+    """Return mock job offers for testing."""
+    return {"jobs": MOCK_JOB_OFFERS}
+
+
 class VapiTestRequest(BaseModel):
     mode: str = "interview"  # "interview" or "job_discovery"
     user_name: str = "Test User"
