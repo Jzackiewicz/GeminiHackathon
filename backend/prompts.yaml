@@ -226,7 +226,10 @@ interview_review:
 
 cv_generation:
   prompt: |
-    Design a professional single-page CV / portfolio website for {name}, a {experience_level} {role}.
+    Generate a single-page PRINTABLE CV / resume for {name}, a {experience_level} {role}.
+
+    This is a CV document — NOT a website. No navigation, no links, no contact forms, no subpages,
+    no hero sections, no CTAs, no footer links. Just a clean, printable resume on one page.
 
     Professional Summary: {summary}
 
@@ -240,23 +243,28 @@ cv_generation:
     Job requirements: {requirements}.
 
     IMPORTANT — Tailoring strategy:
-    - The candidate has their own skills (listed above). The job has its own requirements.
-    - Identify where the candidate's skills OVERLAP with the job requirements — these go first and get the most prominence.
+    - Identify where the candidate's skills OVERLAP with the job requirements — these go first.
     - For job requirements the candidate doesn't have, omit them — don't fabricate skills.
     - For candidate skills not in the requirements but still impressive, include them in a secondary section.
     - Reframe the professional summary to position the candidate as a strong fit for THIS specific role.
     - Choose which projects to highlight based on relevance to the job requirements.
     - Order skills by relevance to the job, not alphabetically.
 
-    Design requirements:
-    - Modern, clean, professional single-page layout
-    - Dark theme with accent colors
-    - Responsive design
-    - Clear sections: header with name and role, summary, skills (with proficiency indicators), projects showcase, and contact section
-    - Use Tailwind CSS for styling
-    - Make the skills section visually interesting with tags or progress bars
-    - Projects should have brief descriptions and tech stack tags
-    - Professional typography and spacing
+    STRICT design requirements — this must look like a real CV/resume:
+    - Single page only — everything must fit on one A4/Letter page when printed
+    - Clean, minimal, professional layout — think "modern LaTeX CV" aesthetic
+    - White or very light background (must print well on paper)
+    - No images, no photos, no icons from external URLs
+    - Use a clean sans-serif font (Inter, system-ui, or similar)
+    - Sections: Name & contact info at top, Professional Summary, Technical Skills, Key Projects (2-3 max), Strengths
+    - Skills displayed as compact tags or a clean grid — not progress bars
+    - Projects: name, 1-line description, tech stack tags — very compact
+    - Generous but efficient use of whitespace
+    - No decorative elements that waste space
+    - Must render perfectly in a headless browser for PDF export
+    - Use Tailwind CSS via CDN for styling
+    - All content in a single centered column, max-width ~800px
+    - Print-friendly: no background colors that waste ink, good contrast
 
 career_advisor:
   system: |
