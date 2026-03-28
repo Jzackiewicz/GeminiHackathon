@@ -54,4 +54,6 @@ export const api = {
     request(`/debug/vapi/assistant/${id}`, { method: "DELETE" }),
   debugVapiChat: (assistant_id, messages) =>
     request("/debug/vapi/chat", { method: "POST", body: JSON.stringify({ assistant_id, messages }) }),
+  debugVapiReview: (params) =>
+    request("/debug/vapi/review", { method: "POST", body: JSON.stringify(params) }),
 };

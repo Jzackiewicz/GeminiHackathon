@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from db import get_db
 from dependencies import get_current_user
 from services.scraper import deep_scrape_github
-from services.llm import analyze_github_profile
+from services.llm import analyze_github_profile, prompt_with_context
 from services.vapi import create_interview_assistant, create_job_discovery_assistant, delete_assistant
 from services.prompts import get_prompt
 from services import logstream
@@ -116,6 +116,84 @@ def cleanup_assistant(assistant_id: str):
         return {"ok": True}
     except Exception as e:
         log.error(f"VAPI assistant deletion failed: {e}")
+        return {"error": str(e)}
+
+
+class InterviewReviewRequest(BaseModel):
+    transcript: list[dict]  # [{role, text}, ...]
+    job_title: str = ""
+    company: str = ""
+    requirements: str = ""
+    github_data: dict | None = None  # raw scraped GitHub data
+    profile_analysis: dict | None = None  # Gemini profile analysis
+
+
+@router.post("/vapi/review")
+def review_interview(body: InterviewReviewRequest):
+    """Use Gemini to review an interview transcript with full profile context."""
+    # Format transcript as readable text
+    transcript_text = "\n".join(
+        f"{'Interviewer' if t['role'] == 'assistant' else 'Candidate'}: {t['text']}"
+        for t in body.transcript
+    )
+
+    # Build profile section if available
+    profile_parts = []
+    if body.profile_analysis:
+        a = body.profile_analysis
+        profile_parts.append(f"Profile Analysis Summary: {a.get('summary', '')}")
+        profile_parts.append(f"Experience Level: {a.get('experience_level', '')}")
+        profile_parts.append(f"Primary Role: {a.get('primary_role', '')}")
+        techs = [t.get('name', '') + f" ({t.get('proficiency', '')})" for t in a.get('technologies', [])]
+        if techs:
+            profile_parts.append(f"Known Technologies: {', '.join(techs)}")
+        strengths = a.get('strengths', [])
+        if strengths:
+            profile_parts.append(f"Strengths: {', '.join(strengths)}")
+        projects = a.get('notable_projects', [])
+        if projects:
+            profile_parts.append("Notable Projects:")
+            for p in projects:
+                profile_parts.append(f"  - {p.get('name', '')}: {p.get('description', '')} [{', '.join(p.get('technologies', []))}]")
+
+    if body.github_data:
+        gh = body.github_data
+        langs = gh.get('languages', {})
+        if langs:
+            top = [f"{l} ({d.get('percent',0)}%)" for l, d in list(langs.items())[:10]]
+            profile_parts.append(f"GitHub Languages (by code volume): {', '.join(top)}")
+        repos = gh.get('repos', [])
+        if repos:
+            profile_parts.append("GitHub Repos:")
+            for r in repos[:10]:
+                desc = f" — {r['description']}" if r.get('description') else ""
+                profile_parts.append(f"  - {r['name']}{desc} [{', '.join(r.get('languages', {}).keys())}]")
+                if r.get('readme'):
+                    profile_parts.append(f"    README excerpt: {r['readme'][:300]}")
+
+    profile_section = ""
+    if profile_parts:
+        profile_section = "Candidate's Actual Profile (from GitHub analysis — use this to identify missed opportunities):\n" + "\n".join(profile_parts)
+
+    system = get_prompt("interview_review", "system")
+    user_prompt = get_prompt(
+        "interview_review", "user",
+        job_title=body.job_title or "Not specified",
+        company=body.company or "Not specified",
+        requirements=body.requirements or "Not specified",
+        profile_section=profile_section,
+    )
+
+    try:
+        raw = prompt_with_context(transcript_text, user_prompt, system=system)
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        review = json.loads(cleaned.strip())
+        return {"review": review}
+    except Exception as e:
         return {"error": str(e)}
 
 

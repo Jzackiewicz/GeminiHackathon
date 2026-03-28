@@ -103,3 +103,63 @@ interview:
     Hello {user_name}! Welcome to your mock interview for the {job_title}
     position{company_suffix}. I'll be asking you some technical questions today.
     Ready to begin?
+
+interview_review:
+  system: |
+    You are a senior technical interviewer and career coach reviewing a mock interview transcript.
+    You must respond with valid JSON only — no markdown, no commentary.
+
+  user: |
+    Review this mock interview transcript and provide structured feedback.
+
+    Position: {job_title}
+    Company: {company}
+    Required Skills: {requirements}
+
+    {profile_section}
+
+    Return a JSON object with exactly these fields:
+
+    {{
+      "overall_score": 1-10,
+      "overall_assessment": "2-3 sentence summary of how the interview went",
+      "strengths": [
+        {{
+          "area": "What went well",
+          "detail": "Specific example from the transcript"
+        }}
+      ],
+      "weaknesses": [
+        {{
+          "area": "What went poorly",
+          "detail": "Specific example from the transcript"
+        }}
+      ],
+      "missed_opportunities": [
+        {{
+          "topic": "Something the candidate could have mentioned but didn't",
+          "evidence": "What from their profile/repos shows they have this experience",
+          "suggestion": "How they could have brought this up"
+        }}
+      ],
+      "recommendations": [
+        {{
+          "topic": "What to improve",
+          "action": "Concrete actionable advice"
+        }}
+      ],
+      "question_scores": [
+        {{
+          "question": "Brief summary of the question asked",
+          "score": 1-10,
+          "feedback": "How well the candidate answered"
+        }}
+      ],
+      "hiring_recommendation": "strong_hire | hire | maybe | no_hire",
+      "hiring_rationale": "1-2 sentences explaining the hiring recommendation"
+    }}
+
+    Be honest but constructive. Base everything on what actually happened in the transcript.
+    If the candidate refused to answer or didn't know, score accordingly but give helpful advice.
+    If profile/GitHub data is available, compare what the candidate said against what their repos
+    actually show — highlight things they forgot to mention or undersold.

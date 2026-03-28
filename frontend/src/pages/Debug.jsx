@@ -428,6 +428,8 @@ function VapiDebug({ analysis, githubData }) {
   const [error, setError] = useState("");
   const [textInput, setTextInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [review, setReview] = useState(null);
   const chatHistoryRef = useRef([]);
   const vapiRef = useRef(null);
   const transcriptContainerRef = useRef(null);
@@ -454,6 +456,7 @@ function VapiDebug({ analysis, githubData }) {
   async function startVoiceCall() {
     setError("");
     setTranscript([]);
+    setReview(null);
     setStatus("Creating assistant...");
     try {
       const { assistant_id, error: apiErr } = await api.debugVapiCreateAssistant(getParams());
@@ -489,6 +492,7 @@ function VapiDebug({ analysis, githubData }) {
   async function startTextChat() {
     setError("");
     setTranscript([]);
+    setReview(null);
     chatHistoryRef.current = [];
     setStatus("Creating assistant...");
     try {
@@ -547,6 +551,26 @@ function VapiDebug({ analysis, githubData }) {
         setSending(false);
         setTimeout(() => inputRef.current?.focus(), 0);
       }
+    }
+  }
+
+  async function reviewInterview() {
+    setReviewing(true);
+    setError("");
+    try {
+      const resp = await api.debugVapiReview({
+        transcript,
+        job_title: jobTitle,
+        company,
+        requirements,
+        github_data: githubData || null,
+        profile_analysis: analysis || null,
+      });
+      if (resp.error) { setError(resp.error); } else { setReview(resp.review); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setReviewing(false);
     }
   }
 
@@ -671,7 +695,133 @@ function VapiDebug({ analysis, githubData }) {
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
-      {status === "Call ended" && !isActive && (
+      {/* Review button — visible after session ends with transcript */}
+      {!isActive && transcript.length > 2 && !review && (
+        <button
+          onClick={reviewInterview}
+          disabled={reviewing}
+          className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition disabled:opacity-50"
+        >
+          {reviewing ? "Analyzing with Gemini..." : "Review Interview"}
+        </button>
+      )}
+
+      {/* Review results */}
+      {review && (
+        <div className="space-y-4 border border-purple-500/30 rounded-xl p-4 bg-purple-950/20">
+          {/* Header with score */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Interview Review</h3>
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                review.overall_score >= 7 ? "bg-green-500/20 text-green-400" :
+                review.overall_score >= 4 ? "bg-yellow-500/20 text-yellow-400" :
+                "bg-red-500/20 text-red-400"
+              }`}>
+                {review.overall_score}/10
+              </span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                review.hiring_recommendation === "strong_hire" ? "bg-green-500/20 text-green-400" :
+                review.hiring_recommendation === "hire" ? "bg-blue-500/20 text-blue-400" :
+                review.hiring_recommendation === "maybe" ? "bg-yellow-500/20 text-yellow-400" :
+                "bg-red-500/20 text-red-400"
+              }`}>
+                {review.hiring_recommendation?.replace("_", " ").toUpperCase()}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-300">{review.overall_assessment}</p>
+          {review.hiring_rationale && (
+            <p className="text-xs text-gray-400 italic">{review.hiring_rationale}</p>
+          )}
+
+          {/* Strengths */}
+          {review.strengths?.length > 0 && (
+            <div>
+              <p className="text-xs text-green-400 font-medium mb-1">Strengths</p>
+              <div className="space-y-1">
+                {review.strengths.map((s, i) => (
+                  <div key={i} className="text-xs p-2 bg-green-500/10 rounded">
+                    <span className="font-medium text-green-300">{s.area}</span>
+                    <span className="text-gray-400"> — {s.detail}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Weaknesses */}
+          {review.weaknesses?.length > 0 && (
+            <div>
+              <p className="text-xs text-red-400 font-medium mb-1">Areas for Improvement</p>
+              <div className="space-y-1">
+                {review.weaknesses.map((w, i) => (
+                  <div key={i} className="text-xs p-2 bg-red-500/10 rounded">
+                    <span className="font-medium text-red-300">{w.area}</span>
+                    <span className="text-gray-400"> — {w.detail}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Missed opportunities */}
+          {review.missed_opportunities?.length > 0 && (
+            <div>
+              <p className="text-xs text-yellow-400 font-medium mb-1">Missed Opportunities</p>
+              <div className="space-y-1">
+                {review.missed_opportunities.map((m, i) => (
+                  <div key={i} className="text-xs p-2 bg-yellow-500/10 rounded">
+                    <span className="font-medium text-yellow-300">{m.topic}</span>
+                    <p className="text-gray-400 mt-0.5">{m.evidence}</p>
+                    <p className="text-yellow-200/70 mt-0.5 italic">{m.suggestion}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {review.recommendations?.length > 0 && (
+            <div>
+              <p className="text-xs text-blue-400 font-medium mb-1">Recommendations</p>
+              <div className="space-y-1">
+                {review.recommendations.map((r, i) => (
+                  <div key={i} className="text-xs p-2 bg-blue-500/10 rounded">
+                    <span className="font-medium text-blue-300">{r.topic}</span>
+                    <span className="text-gray-400"> — {r.action}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Per-question scores */}
+          {review.question_scores?.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Question Breakdown</p>
+              <div className="space-y-1">
+                {review.question_scores.map((q, i) => (
+                  <div key={i} className="text-xs p-2 bg-gray-800 rounded flex items-start gap-2">
+                    <span className={`px-1.5 py-0.5 rounded font-bold shrink-0 ${
+                      q.score >= 7 ? "bg-green-500/20 text-green-400" :
+                      q.score >= 4 ? "bg-yellow-500/20 text-yellow-400" :
+                      "bg-red-500/20 text-red-400"
+                    }`}>{q.score}/10</span>
+                    <div>
+                      <p className="text-gray-300 font-medium">{q.question}</p>
+                      <p className="text-gray-500">{q.feedback}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {status === "Call ended" && !isActive && !review && transcript.length <= 2 && (
         <p className="text-gray-500 text-xs text-center">Session ended. Configure and start a new one above.</p>
       )}
     </div>
