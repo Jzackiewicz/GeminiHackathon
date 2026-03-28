@@ -382,9 +382,267 @@ export default function Debug() {
           )}
         </div>
 
+        {/* CV Generation via Stitch */}
+        <StitchCV analysis={analysis} githubData={result?.github_data} />
+
         {/* VAPI Voice Test */}
         <VapiDebug analysis={analysis} githubData={result?.github_data} />
       </div>
+    </div>
+  );
+}
+
+
+function StitchCV({ analysis, githubData }) {
+  const [jobTitle, setJobTitle] = useState("");
+  const [company, setCompany] = useState("");
+  const [requirements, setRequirements] = useState("");
+  const [autoFilled, setAutoFilled] = useState(false);
+
+  const [generating, setGenerating] = useState(false);
+  const [jobId, setJobId] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [cvResult, setCvResult] = useState(null); // { html, screenshotUrl, elapsed }
+  const [error, setError] = useState("");
+  const [promptPreview, setPromptPreview] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
+
+  const timerRef = useRef(null);
+  const pollRef = useRef(null);
+
+  // Auto-fill from analysis
+  useEffect(() => {
+    if (!analysis || autoFilled) return;
+    if (analysis.primary_role) setJobTitle(analysis.primary_role);
+    const topTechs = (analysis.technologies || [])
+      .filter((t) => t.proficiency === "advanced" || t.proficiency === "expert")
+      .map((t) => t.name)
+      .join(", ");
+    if (topTechs) setRequirements(topTechs);
+    setAutoFilled(true);
+  }, [analysis]);
+
+  function getParams() {
+    return {
+      github_data: githubData || null,
+      profile_analysis: analysis || null,
+      job_title: jobTitle || null,
+      company: company || null,
+      requirements: requirements || null,
+    };
+  }
+
+  async function previewPrompt() {
+    try {
+      const resp = await api.debugPreviewCVPrompt(getParams());
+      if (resp.error) { setError(resp.error); return; }
+      setPromptPreview(resp.prompt);
+      setShowPreview(true);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function startGeneration() {
+    setError("");
+    setCvResult(null);
+    setGenerating(true);
+    setElapsed(0);
+    setShowPreview(false);
+
+    // Start elapsed timer
+    const startTime = Date.now();
+    timerRef.current = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    try {
+      const resp = await api.debugGenerateCV(getParams());
+      if (resp.error) {
+        setError(resp.error);
+        setGenerating(false);
+        clearInterval(timerRef.current);
+        return;
+      }
+      setJobId(resp.job_id);
+
+      // Start polling
+      pollRef.current = setInterval(async () => {
+        try {
+          const status = await api.debugCVStatus(resp.job_id);
+          if (status.status === "done") {
+            setCvResult({ html: status.html, screenshotUrl: status.screenshotUrl, elapsed: status.elapsed });
+            setGenerating(false);
+            clearInterval(pollRef.current);
+            clearInterval(timerRef.current);
+          } else if (status.status === "error") {
+            setError(status.error || "Generation failed");
+            setGenerating(false);
+            clearInterval(pollRef.current);
+            clearInterval(timerRef.current);
+          }
+        } catch (err) {
+          setError(err.message);
+          setGenerating(false);
+          clearInterval(pollRef.current);
+          clearInterval(timerRef.current);
+        }
+      }, 3000);
+    } catch (err) {
+      setError(err.message);
+      setGenerating(false);
+      clearInterval(timerRef.current);
+    }
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current);
+      clearInterval(pollRef.current);
+    };
+  }, []);
+
+  function downloadHTML() {
+    if (!cvResult?.html) return;
+    const blob = new Blob([cvResult.html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const name = githubData?.name || githubData?.username || "developer";
+    a.download = `cv-${name.toLowerCase().replace(/\s+/g, "-")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const hasData = !!(githubData || analysis);
+
+  return (
+    <div className="bg-gray-900 rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">CV Generation (Stitch)</h2>
+        {cvResult && (
+          <span className="text-xs text-gray-500">Generated in {cvResult.elapsed}s</span>
+        )}
+      </div>
+
+      {!hasData && (
+        <p className="text-gray-500 text-sm">Scrape a GitHub profile and run Gemini analysis first to populate CV data.</p>
+      )}
+
+      {hasData && !generating && !cvResult && (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">
+            Generate a professional CV/portfolio using Google Stitch. Uses scraped GitHub data and Gemini analysis.
+            Takes ~2 minutes.
+          </p>
+
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="Target job title (optional)"
+              className="px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+            />
+            <input
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Target company (optional)"
+              className="px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+            />
+            <input
+              value={requirements}
+              onChange={(e) => setRequirements(e.target.value)}
+              placeholder="Key requirements to emphasize (optional)"
+              className="col-span-2 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-xs"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={previewPrompt}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
+            >
+              Preview Prompt
+            </button>
+            <button
+              onClick={startGeneration}
+              className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition"
+            >
+              Generate CV
+            </button>
+          </div>
+
+          {showPreview && promptPreview && (
+            <CollapsibleSection title="Stitch Prompt Preview" defaultOpen>
+              <pre className="text-xs text-gray-300 whitespace-pre-wrap">{promptPreview}</pre>
+            </CollapsibleSection>
+          )}
+        </div>
+      )}
+
+      {generating && (
+        <div className="text-center py-8 space-y-3">
+          <div className="inline-flex items-center gap-3">
+            <svg className="animate-spin h-5 w-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span className="text-sm text-gray-300">Generating CV with Stitch...</span>
+          </div>
+          <p className="text-2xl font-mono text-indigo-400">{elapsed}s</p>
+          <p className="text-xs text-gray-500">This typically takes 90-120 seconds</p>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-red-400 text-sm">{error}</p>
+      )}
+
+      {cvResult && (
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <button
+              onClick={downloadHTML}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition"
+            >
+              Download HTML
+            </button>
+            <button
+              onClick={() => {
+                const win = window.open("", "_blank");
+                win.document.write(cvResult.html);
+                win.document.close();
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
+            >
+              Open in New Tab
+            </button>
+            <button
+              onClick={() => { setCvResult(null); setJobId(null); }}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
+            >
+              Generate Another
+            </button>
+          </div>
+
+          {/* Inline preview */}
+          <CollapsibleSection title={`CV Preview (${cvResult.html.length.toLocaleString()} chars)`} defaultOpen>
+            <div className="bg-white rounded-lg overflow-hidden" style={{ height: "600px" }}>
+              <iframe
+                srcDoc={cvResult.html}
+                title="CV Preview"
+                className="w-full h-full border-0"
+                sandbox="allow-scripts"
+              />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Raw HTML">
+            <pre className="text-xs text-gray-400 whitespace-pre-wrap max-h-96 overflow-y-auto">{cvResult.html}</pre>
+          </CollapsibleSection>
+        </div>
+      )}
     </div>
   );
 }

@@ -56,4 +56,9 @@ export const api = {
     request("/debug/vapi/chat", { method: "POST", body: JSON.stringify({ assistant_id, messages }) }),
   debugVapiReview: (params) =>
     request("/debug/vapi/review", { method: "POST", body: JSON.stringify(params) }),
+  debugGenerateCV: (params) =>
+    request("/debug/cv/generate", { method: "POST", body: JSON.stringify(params) }),
+  debugCVStatus: (jobId) => request(`/debug/cv/status/${jobId}`),
+  debugPreviewCVPrompt: (params) =>
+    request("/debug/cv/preview-prompt", { method: "POST", body: JSON.stringify(params) }),
 };

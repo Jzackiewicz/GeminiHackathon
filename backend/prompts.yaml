@@ -163,3 +163,28 @@ interview_review:
     If the candidate refused to answer or didn't know, score accordingly but give helpful advice.
     If profile/GitHub data is available, compare what the candidate said against what their repos
     actually show — highlight things they forgot to mention or undersold.
+
+cv_generation:
+  prompt: |
+    Design a professional single-page CV / portfolio website for {name}, a {experience_level} {role}.
+
+    Professional Summary: {summary}
+
+    Technical Skills: {skills}
+
+    Key Strengths: {strengths}
+
+    Notable Projects: {projects}
+
+    This CV is tailored for a {job_title} position at {company}.
+    Emphasize these skills and requirements: {requirements}.
+
+    Design requirements:
+    - Modern, clean, professional single-page layout
+    - Dark theme with accent colors
+    - Responsive design
+    - Clear sections: header with name and role, summary, skills (with proficiency indicators), projects showcase, and contact section
+    - Use Tailwind CSS for styling
+    - Make the skills section visually interesting with tags or progress bars
+    - Projects should have brief descriptions and tech stack tags
+    - Professional typography and spacing

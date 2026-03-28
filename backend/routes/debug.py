@@ -13,6 +13,7 @@ from services.llm import analyze_github_profile, prompt_with_context
 from services.vapi import create_interview_assistant, create_job_discovery_assistant, delete_assistant
 from services.prompts import get_prompt
 from services import logstream
+from services.stitch import start_generation, get_job, build_cv_prompt
 
 router = APIRouter(prefix="/api/debug")
 log = logging.getLogger("debug")
@@ -226,6 +227,57 @@ async def vapi_chat(body: ChatMessage):
         return {
             "output": data.get("output", []),
         }
+
+
+class CVGenerateRequest(BaseModel):
+    github_data: dict | None = None
+    profile_analysis: dict | None = None
+    job_title: str | None = None
+    company: str | None = None
+    requirements: str | None = None
+
+
+@router.post("/cv/generate")
+async def generate_cv(body: CVGenerateRequest):
+    """Start async CV generation via Google Stitch. Returns a job_id for polling."""
+    log.info("Starting CV generation")
+    try:
+        job_id = await start_generation(
+            github_data=body.github_data,
+            profile_analysis=body.profile_analysis,
+            job_title=body.job_title,
+            company=body.company,
+            requirements=body.requirements,
+        )
+        return {"job_id": job_id}
+    except Exception as e:
+        log.error(f"CV generation start failed: {e}")
+        return {"error": str(e)}
+
+
+@router.get("/cv/status/{job_id}")
+def cv_status(job_id: str):
+    """Poll for CV generation status."""
+    job = get_job(job_id)
+    if not job:
+        return {"error": "Job not found"}
+    return job
+
+
+@router.post("/cv/preview-prompt")
+def cv_preview_prompt(body: CVGenerateRequest):
+    """Preview the Stitch prompt that would be generated from the given data."""
+    try:
+        prompt = build_cv_prompt(
+            github_data=body.github_data,
+            profile_analysis=body.profile_analysis,
+            job_title=body.job_title,
+            company=body.company,
+            requirements=body.requirements,
+        )
+        return {"prompt": prompt}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @router.get("/logs")
